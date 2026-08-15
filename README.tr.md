@@ -104,6 +104,7 @@ yanındaki kutudan düşünme seviyesini de seçebilirsin.
 | --- | --- |
 | Kaydı başlat / bitir | `Ctrl+Space`, ya da tepsi simgesine tıkla |
 | Kaydı iptal et | `Ctrl+Alt+Space`, tepsi menüsü, ya da `dikte cancel` |
+| Duraklat ve devam et | Tepsi menüsü → *Kaydı duraklat*, ya da `dikte pause` |
 | Ajana sesle komut ver | Tepsi menüsü → *Claude'a sor*, ya da `dikte ask` |
 | Toplantıyı başlat / bitir | Tepsi menüsü → *Toplantı kaydet*, ya da `dikte meeting` |
 | Ayarlar | Tepsi menüsü → *Ayarlar*, ya da `dikte settings` |

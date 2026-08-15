@@ -54,11 +54,39 @@ class Recorder(QObject):
         self._rms = []
         self._cancelled = False
         self._stopping = False
+        self._paused = False
         self._lock = threading.Lock()
 
     @property
     def active(self):
         return self._thread is not None and self._thread.is_alive()
+
+    @property
+    def paused(self):
+        with self._lock:
+            return self._paused
+
+    def pause(self):
+        """Stop keeping what the microphone sends, without letting go of it.
+
+        The recorder process stays up and its output is still read, only
+        thrown away. Ending it instead would hand the device back, and taking
+        it again costs the first moment of whatever is said next, which is the
+        moment somebody who just un-paused is talking in. What the pause
+        leaves out of the recording is the part nobody wanted transcribed.
+        """
+        return self._set_paused(True)
+
+    def resume(self):
+        return self._set_paused(False)
+
+    def _set_paused(self, paused):
+        """True when there was a recording to do it to, False when there was not."""
+        if not self.active:
+            return False
+        with self._lock:
+            self._paused = paused
+        return True
 
     def start(self, target="", max_seconds=300):
         if self.active:
@@ -80,6 +108,7 @@ class Recorder(QObject):
         self._rms = []
         self._cancelled = False
         self._stopping = False
+        self._paused = False
         self._max_bytes = int(max_seconds * RATE * SAMPLE_WIDTH * CHANNELS)
         self._thread = threading.Thread(target=self._pump, daemon=True)
         self._thread.start()
@@ -94,9 +123,17 @@ class Recorder(QObject):
                     break
                 peak, rms = chunk_levels(chunk)
                 with self._lock:
-                    self._buffer.extend(chunk)
-                    self._rms.append(rms)
+                    paused = self._paused
+                    if not paused:
+                        self._buffer.extend(chunk)
+                        self._rms.append(rms)
                     too_long = len(self._buffer) >= self._max_bytes
+                if paused:
+                    # Read and dropped rather than left unread: a pipe nobody
+                    # empties fills up, and then the recorder blocks on it.
+                    # The level is not reported either, because a meter still
+                    # moving is the one thing a pause must not look like.
+                    continue
                 self.level.emit(peak)
                 if too_long:
                     self._terminate()

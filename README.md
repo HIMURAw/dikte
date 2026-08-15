@@ -104,6 +104,7 @@ set next to it.
 | --- | --- |
 | Start / stop recording | `Ctrl+Space`, or click the tray icon |
 | Discard the recording | `Ctrl+Alt+Space`, tray menu, or `dikte cancel` |
+| Pause and pick it up again | Tray menu → *Pause the recording*, or `dikte pause` |
 | Speak a command to an agent | Tray menu → *Ask Claude*, or `dikte ask` |
 | Start / end a meeting | Tray menu → *Record a meeting*, or `dikte meeting` |
 | Settings | Tray menu → *Settings*, or `dikte settings` |

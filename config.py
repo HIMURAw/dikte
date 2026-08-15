@@ -435,6 +435,9 @@ DEFAULTS = {
     # trick lands on the toggle, Alt and Option being one key, so discarding
     # gets a letter instead.
     "cancel_shortcut": "Ctrl+Option+D" if _MACOS else "Ctrl+Alt+Space",
+    # Off until it is asked for, like every shortcut but the toggle: a key
+    # taken by default is a key taken from whatever already had it.
+    "pause_shortcut": "",
     "evdev_hotkey": False,
     "overlay_corner": "bottom-left",
     "keep_audio": False,

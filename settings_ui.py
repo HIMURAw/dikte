@@ -1253,6 +1253,17 @@ class SettingsWindow(QDialog):
                       "on a dictation and on a command for the agent alike, "
                       "whichever is running."),
         )
+        # Worth a key of its own rather than a menu item: the reason to pause
+        # is that something else wants your hands and your attention, and
+        # finding a tray icon is the part you have no moment for.
+        self._shortcut_row(
+            form, "pause", t("Pause and resume"),
+            t("No global shortcut installed. The tray menu pauses it too."),
+            tooltip=t("Keeps the microphone but stops recording what it hears, "
+                      "so the pause is not in the transcript. The recording "
+                      "picks up where it left off, and the time spent paused "
+                      "does not count towards the longest recording."),
+        )
         layout.addLayout(form)
 
         self.evdev_enabled = QCheckBox(t(

@@ -614,6 +614,16 @@ class Replies(DikteTest):
                 captured():
             self.assertEqual(cli.run(["cancel"]), 0)
 
+    def test_pause_says_which_half_of_itself_it_just_did(self):
+        """One verb for both, so the answer is what it left behind rather than
+        what it was asked, which is the only way a script can tell."""
+        for paused, expected in ((True, "paused"), (False, "resumed")):
+            with self.subTest(paused=paused):
+                code, out, _ = self.run_verb(["pause"],
+                                             {"ok": True, "paused": paused})
+                self.assertEqual(code, 0)
+                self.assertIn(expected, out.lower())
+
 
 if __name__ == "__main__":
     unittest.main()

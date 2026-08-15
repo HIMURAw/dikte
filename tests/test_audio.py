@@ -235,6 +235,44 @@ class FakeProcess:
         self._alive = False
 
 
+class _HookedStdout:
+    """A stream that says how much has been handed over, as it hands it over."""
+
+    def __init__(self, data, hook):
+        self._buffer = io.BytesIO(data)
+        self._hook = hook
+        self._given = 0
+
+    def read(self, size):
+        chunk = self._buffer.read(size)
+        self._given += len(chunk)
+        self._hook(self._given)
+        return chunk
+
+
+class PausingProcess(FakeProcess):
+    """A recorder that pauses part way through what it hands over.
+
+    Flipped from inside read(), which runs on the pump thread, so the pause
+    lands between two chunks rather than wherever another thread reached.
+    """
+
+    def __init__(self, data, recorder, pause_at, resume_at=None):
+        super().__init__(data)
+        self.stdout = _HookedStdout(data, self._at)
+        self._recorder = recorder
+        self._pause_at = pause_at
+        self._resume_at = resume_at
+
+    def _at(self, given):
+        if self._pause_at is not None and given >= self._pause_at:
+            self._recorder.pause()
+            self._pause_at = None
+        elif self._resume_at is not None and given >= self._resume_at:
+            self._recorder.resume()
+            self._resume_at = None
+
+
 class RecordingCommand(OnLinux, DikteTest):
     """Which program captures the microphone, and how it is asked to."""
 
@@ -395,6 +433,51 @@ class RecorderChain(OnLinux, DikteTest):
             recorder.cancel()
             recorder.stop()
         self.assertEqual(results, [])
+
+    def paused_run(self, seconds, pause_at, resume_at=None):
+        """Record `seconds` of tone, pausing and resuming at those offsets."""
+        per_second = audio.RATE * audio.SAMPLE_WIDTH * audio.CHANNELS
+        recorder = audio.Recorder()
+        results = []
+        recorder.stopped.connect(lambda *args: results.append(args))
+        proc = PausingProcess(
+            tone(seconds), recorder, int(pause_at * per_second),
+            None if resume_at is None else int(resume_at * per_second))
+        with only_these_tools("pw-record"), \
+                mock.patch.object(subprocess, "Popen", return_value=proc):
+            recorder.start()
+            recorder._thread.join(timeout=5)
+            recorder.stop()
+        return recorder, results
+
+    # The pause takes effect between two chunks, so where it falls is exact
+    # to one of them and no closer. Written as the chunk rather than as a
+    # number, so that changing CHUNK_BYTES does not turn this red.
+    CHUNK_SECONDS = audio.CHUNK_BYTES / (audio.RATE * audio.SAMPLE_WIDTH
+                                         * audio.CHANNELS)
+
+    def test_what_is_recorded_while_paused_is_not_kept(self):
+        """Half a second in, and the second half of it never reaches the file."""
+        _, results = self.paused_run(1.0, pause_at=0.5)
+        path, duration, _ = results[0]
+        self.addCleanup(os.unlink, path)
+        self.assertAlmostEqual(duration, 0.5, delta=2 * self.CHUNK_SECONDS)
+
+    def test_the_two_halves_either_side_of_a_pause_are_one_recording(self):
+        _, results = self.paused_run(1.0, pause_at=0.25, resume_at=0.75)
+        path, duration, _ = results[0]
+        self.addCleanup(os.unlink, path)
+        self.assertAlmostEqual(duration, 0.5, delta=2 * self.CHUNK_SECONDS)
+
+    def test_resuming_leaves_it_recording_again(self):
+        recorder, _ = self.paused_run(1.0, pause_at=0.25, resume_at=0.75)
+        self.assertFalse(recorder.paused)
+
+    def test_there_is_nothing_to_pause_before_it_starts(self):
+        recorder = audio.Recorder()
+        self.assertFalse(recorder.pause())
+        self.assertFalse(recorder.resume())
+        self.assertFalse(recorder.paused)
 
     def test_a_recording_that_runs_past_the_limit_is_cut_off(self):
         _, results, _, _ = self.record(tone(3.0), max_seconds=1)

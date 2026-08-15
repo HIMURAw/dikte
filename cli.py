@@ -178,6 +178,16 @@ def cmd_cancel(opts):
     return 0 if reply is not None else _not_running(opts)
 
 
+def cmd_pause(opts):
+    """One verb for both halves, the way toggle is one verb for both of its."""
+    reply = _ask_instance(opts, "pause")
+    if reply is None:
+        return _not_running(opts)
+    paused = bool((ipc.send("status") or {}).get("paused"))
+    return out(opts, {"ok": True, "paused": paused},
+               "Recording paused." if paused else "Recording resumed.")
+
+
 def cmd_plain(opts):
     """The verbs with nothing to say: settings, restart, quit, ask-reset…"""
     reply = _ask_instance(opts, opts.verb)
@@ -880,6 +890,8 @@ def build_parser():
         page.set_defaults(func=cmd_toggle)
 
     leaf(subs, "cancel", "throw away the recording").set_defaults(func=cmd_cancel)
+    leaf(subs, "pause", "pause the recording, or pick it up again"
+         ).set_defaults(func=cmd_pause)
 
     # --- the agent --------------------------------------------------------
     ask = leaf(subs, "ask", "put a command to the agent")

@@ -57,6 +57,8 @@ TR = {
     "Stop and transcribe": "Kaydı bitir ve yaz",
     "Working…": "İşleniyor…",
     "Discard the recording": "Kaydı iptal et",
+    "Pause the recording": "Kaydı duraklat",
+    "Resume the recording": "Kayda devam et",
     "Settings…": "Ayarlar…",
     "Restart": "Yeniden başlat",
     "Quit": "Çık",
@@ -637,6 +639,15 @@ TR = {
         "yeniden denenebilsin diye. Buradaki ayar başarıyla bitenler için.",
     "none": "yok",
     "Type a key combination first.": "Önce bir tuş kombinasyonu yaz.",
+    "Pause and resume": "Duraklat ve devam et",
+    "No global shortcut installed. The tray menu pauses it too.":
+        "Global kısayol kurulu değil. Tepsi menüsünden de duraklatabilirsin.",
+    "Keeps the microphone but stops recording what it hears, so the pause is "
+    "not in the transcript. The recording picks up where it left off, and the "
+    "time spent paused does not count towards the longest recording.":
+        "Mikrofonu bırakmaz ama duyduğunu kaydetmeyi durdurur, böylece mola "
+        "transkripte girmez. Kayıt kaldığı yerden devam eder ve duraklamada "
+        "geçen süre en uzun kayıt sınırına sayılmaz.",
     "No KDE shortcut installed. The tray menu starts a meeting too.":
         "KDE kısayolu kurulu değil. Toplantıyı tepsi menüsünden de başlatabilirsin.",
     "System instruction given to the minutes model.":
