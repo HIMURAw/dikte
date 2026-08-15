@@ -5,9 +5,11 @@ machine by default, a model cleans it up (dropping the *uh*s, the restarts, the
 missing punctuation), and the result lands in your clipboard and is pasted into
 whatever window you were typing in.
 
-Built for KDE Plasma 6 on Wayland, and runs on GNOME X11 and macOS too. No
-dependencies beyond system packages: just the Python standard library, 3.11 or
-newer, and PyQt6.
+Built for KDE Plasma 6 on Wayland, and runs on GNOME and macOS too. The
+clipboard follows the session, Wayland or X11, and the shortcuts follow the
+desktop, KDE's file or GNOME's gsettings; the two are picked apart from each
+other, so GNOME works on either session. No dependencies beyond system
+packages: just the Python standard library, 3.11 or newer, and PyQt6.
 
 *[Türkçe README](README.tr.md)*
 

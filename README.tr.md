@@ -4,9 +4,11 @@
 çevrilir, bir model transkripti temizler (ıı'lar, tekrarlar, eksik noktalama),
 sonuç panoya kopyalanır ve o an yazdığın pencereye yapıştırılır.
 
-KDE Plasma 6 / Wayland için yazıldı, GNOME X11 ve macOS'ta da çalışır. Sistem
-paketleri dışında bağımlılığı yok: sadece Python standart kütüphanesi (3.11 veya
-üstü) ve PyQt6.
+KDE Plasma 6 / Wayland için yazıldı, GNOME ve macOS'ta da çalışır. Pano
+oturumu izler (Wayland ya da X11), kısayollar ise masaüstünü (KDE'nin dosyası
+ya da GNOME'un gsettings'i); ikisi birbirinden ayrı seçildiği için GNOME her
+iki oturumda da çalışır. Sistem paketleri dışında bağımlılığı yok: sadece
+Python standart kütüphanesi (3.11 veya üstü) ve PyQt6.
 
 *[English README](README.md)*
 
