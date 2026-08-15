@@ -31,14 +31,18 @@ dikte                        # ilk açılışta ayarlar penceresi gelir
 ```
 
 Fedora'da paket adları farklı, Fedora'nın kendi depolarındaki `ffmpeg-free`
-yetiyor çünkü Dikte video dosyasının yalnızca ses izini alıyor, `ydotool` da
-bir adım fazla istiyor: sistem servisi olarak geliyor, soketi de root'a ait
-kalıp oturumun erişemediği yerde durduğu için servis çalışırken bile otomatik
-yapıştırma tutmuyor. Soketi istemcinin zaten baktığı yola al ve sahipliğini
-devret:
+yetiyor çünkü Dikte video dosyasının yalnızca ses izini alıyor, ikisi de bir
+cümleyi hak ediyor. Mikrofon listesini okuyan `pactl`, Fedora'da `pw-record`'u
+taşıyan `pipewire-utils`'ten ayrı olarak `pulseaudio-utils` içinde duruyor;
+o kurulu değilken aygıt listeleri boş dönüyor ve Dikte suçu PipeWire'a atıyor.
+`ydotool` da bir adım fazla istiyor: sistem servisi olarak geliyor, soketi de
+root'a ait kalıp oturumun erişemediği yerde durduğu için servis çalışırken bile
+otomatik yapıştırma tutmuyor. Soketi istemcinin zaten baktığı yola al ve
+sahipliğini devret:
 
 ```sh
-sudo dnf install pipewire-utils wl-clipboard ydotool ffmpeg-free python3-pyqt6
+sudo dnf install pipewire-utils pulseaudio-utils wl-clipboard ydotool \
+                 ffmpeg-free python3-pyqt6
 sudo mkdir -p /etc/systemd/system/ydotool.service.d
 printf '[Service]\nExecStart=\nExecStart=/usr/bin/ydotoold --socket-path=%s/.ydotool_socket --socket-own=%s:%s\n' \
   "$XDG_RUNTIME_DIR" "$(id -u)" "$(id -g)" \
