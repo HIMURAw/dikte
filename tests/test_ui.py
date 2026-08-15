@@ -139,6 +139,32 @@ class Settings(DikteTest):
         self.assertEqual(tabs.count(), 9)
         self.assertEqual(window.windowTitle(), "Dikte Settings")
 
+    def test_no_tab_can_stretch_the_window_past_a_small_screen(self):
+        # A tab that keeps its full height hands that height to the window as a
+        # minimum, and a tall one then carries Save off the bottom of a laptop
+        # screen with no way to drag it back. Each tab scrolls instead.
+        window = self.window(cfg.Config())
+        for index in range(window.tabs.count()):
+            window.tabs.setCurrentIndex(index)
+            self.assertLess(window.minimumSizeHint().height(), 500,
+                            window.tabs.tabText(index))
+
+    def test_a_wrapped_label_keeps_the_room_its_lines_need(self):
+        # The program path shares a row with a button, and a row is measured
+        # before its width is known: the label has to claim the second line back
+        # itself, and give it up again when the window is widened.
+        label = settings_ui.WrappedLabel()
+        # Shown, because a hidden widget is told about its new size only once
+        # somebody looks at it, and the height is worked out from that size.
+        label.show()
+        self.addCleanup(label.deleteLater)
+        line = label.fontMetrics().height()
+        label.resize(120, line)
+        label.setText("Installed on the system: /opt/homebrew/bin/whisper-server")
+        self.assertGreater(label.minimumHeight(), line)
+        label.resize(2000, line)
+        self.assertLessEqual(label.minimumHeight(), line)
+
     def test_saving_without_touching_anything_changes_nothing(self):
         """Every widget has to load what is stored, or Save writes its default
         over it. This says so for the whole table at once."""
