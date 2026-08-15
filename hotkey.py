@@ -112,6 +112,7 @@ class EvdevHotkey(QObject):
     """
 
     triggered = pyqtSignal(str)   # the name the binding was registered under
+    released = pyqtSignal(str)    # that same binding's key coming back up
     failed = pyqtSignal(str)
 
     EVENT_FMT = "llHHi"
@@ -173,6 +174,12 @@ class EvdevHotkey(QObject):
 
     def _loop(self, fds):
         held = set()
+        # Which bindings are down. The modifiers are usually let go of before
+        # the key is, so by the time the release arrives the combination no
+        # longer matches; what says the release belongs to us is that the press
+        # did. Holding a key is only a thing anybody can do to a binding that
+        # actually fired.
+        down = set()
         try:
             while not self._stop.is_set():
                 # Short enough that stop() does not stall its caller waiting for
@@ -194,7 +201,13 @@ class EvdevHotkey(QObject):
                         elif value == 1:
                             for mods, name in self._bindings.get(code, ()):
                                 if self._mods_match(held, mods):
+                                    down.add((code, name))
                                     self.triggered.emit(name)
+                        elif value == 0:
+                            for _mods, name in self._bindings.get(code, ()):
+                                if (code, name) in down:
+                                    down.discard((code, name))
+                                    self.released.emit(name)
         finally:
             for fd in fds:
                 try:

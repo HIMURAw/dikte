@@ -435,6 +435,10 @@ DEFAULTS = {
     # trick lands on the toggle, Alt and Option being one key, so discarding
     # gets a letter instead.
     "cancel_shortcut": "Ctrl+Option+D" if _MACOS else "Ctrl+Alt+Space",
+    # Hold the key to record and let go to send, rather than pressing twice.
+    # Only the built-in listener can do it: a desktop registry reports that a
+    # combination was pressed and never that it was let go of.
+    "hold_to_talk": False,
     "evdev_hotkey": False,
     "overlay_corner": "bottom-left",
     "keep_audio": False,

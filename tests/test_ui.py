@@ -95,6 +95,7 @@ CHANGED = {
     "shortcut": "Ctrl+Alt+Space",
     "cancel_shortcut": "Meta+Shift+Space",
     "evdev_hotkey": True,
+    "hold_to_talk": True,
     "history_limit": 50,
 }
 
