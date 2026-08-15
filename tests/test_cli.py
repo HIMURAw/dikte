@@ -444,6 +444,23 @@ class Doctor(DikteTest):
                       self.run_doctor(as_json=False, cleanup_provider="codex",
                                       cleanup_codex_model="gpt-5.4"))
 
+    def test_cleanup_on_this_machine_is_a_question_about_the_downloads(self):
+        """llama.cpp is fetched rather than installed, so there is no program
+        on the PATH to ask after: doctor used to look one up by the empty name
+        cleanup.executable() gives it, and take the whole command down."""
+        reply = self.run_doctor(cleanup_provider="local",
+                                local_llm_model="gemma-3-4b-it-Q4_K_M.gguf")
+        self.assertEqual(reply["cleanup"]["provider"], "local")
+        self.assertEqual(reply["cleanup"]["model"], "gemma-3-4b-it-Q4_K_M.gguf")
+        self.assertFalse(reply["cleanup"]["ready"])   # nothing downloaded here
+        self.assertIn("llama.cpp, cleaning up on gemma-3-4b-it-Q4_K_M.gguf",
+                      self.run_doctor(as_json=False, cleanup_provider="local",
+                                      local_llm_model="gemma-3-4b-it-Q4_K_M.gguf"))
+
+    def test_cleanup_on_this_machine_with_no_model_chosen_yet(self):
+        text = self.run_doctor(as_json=False, cleanup_provider="local")
+        self.assertIn("llama.cpp, cleaning up on no model yet", text)
+
 
 class Finding(DikteTest):
     def test_no_history_at_all(self):

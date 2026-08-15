@@ -799,21 +799,42 @@ def cmd_doctor(opts):
                           "key": bool(target.api_key)},
         "cleanup": {"enabled": conf["cleanup_enabled"], "provider": cleaner,
                     "model": cleanup.model(conf),
-                    "key": bool(conf.openrouter_key())},
+                    "key": bool(conf.openrouter_key()),
+                    # The one answer a script wants, which it could not work
+                    # out from the rest: each provider is ready for its own
+                    # reason, and only two of the four are ready for a key.
+                    "ready": conf.local_llm_ready() if cleaner == "local"
+                    else bool(conf.openrouter_key()) if cleaner == "openrouter"
+                    else bool(shutil.which(cleanup.executable(cleaner)))},
         "agent": {"provider": assistant.provider(conf),
                   "directory": assistant.working_dir(conf)},
         "running": ipc.send("status") is not None,
     }
+    def cleanup_line():
+        """Whichever of the four ways of cleaning up is chosen, and whether it
+        could run right now. Each is ready for a different reason: a key, two
+        downloads, or a program on the PATH."""
+        if cleaner == "openrouter":
+            return (f"{'✓' if conf.openrouter_key() else '✗'} OpenRouter key, "
+                    f"cleaning up on {conf['cleanup_model']}")
+        if cleaner == "local":
+            # llama.cpp is fetched rather than installed, so there is no
+            # program on the PATH to look for and cleanup.executable() says so
+            # by answering with nothing. What settles it is the binary and the
+            # model both having been downloaded.
+            return (f"{'✓' if conf.local_llm_ready() else '✗'} llama.cpp, "
+                    f"cleaning up on {cleanup.model(conf) or 'no model yet'}")
+        # A CLI needs no key, so what is checked is the program.
+        program = cleanup.executable(cleaner)
+        return (f"{'✓' if programs.get(program) else '✗'} {program}, "
+                f"cleaning up on {cleanup.model(conf)}")
+
     lines = [f"{'✓' if path else '✗'} {name:14} {path or 'not on your PATH'}"
              for name, path in programs.items()]
     lines += [
         f"{'✓' if target.api_key else '✗'} {target.service} key, transcribing on "
         f"{target.model}",
-        # Cleanup on a CLI needs no key, so what is checked is the program.
-        (f"{'✓' if conf.openrouter_key() else '✗'} OpenRouter key, cleaning up on "
-         f"{conf['cleanup_model']}") if cleaner == "openrouter" else
-        (f"{'✓' if programs[cleanup.executable(cleaner)] else '✗'} "
-         f"{cleanup.executable(cleaner)}, cleaning up on {cleanup.model(conf)}"),
+        cleanup_line(),
         f"{'✓' if checks['running'] else '·'} application "
         + ("running" if checks["running"] else "not running"),
     ]
