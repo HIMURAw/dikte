@@ -197,10 +197,52 @@ class Chooser(DikteTest):
         with self.under("KDE"):
             self.assertEqual(hotkey.desktop_name(), "KDE")
 
-    def test_a_gnome_session_with_no_gsettings_falls_back(self):
-        """Nothing to write the binding with, so KDE's file is the only try."""
+    def test_a_gnome_session_with_no_gsettings_has_nowhere_to_write(self):
+        """KDE's file used to be the fallback, and it is not one: with no
+        gsettings and no KWin the binding goes where nothing reads it."""
         with self.under("GNOME", has_gsettings=False):
-            self.assertEqual(hotkey.desktop_name(), "KDE")
+            self.assertEqual(hotkey.registry(), "")
+            self.assertFalse(hotkey.installs_shortcuts())
+
+    def test_a_desktop_that_is_neither_is_not_taken_for_kde(self):
+        """i3, XFCE, Cinnamon, MATE and the rest run without KWin, so the file
+        Dikte used to write for them was read by nobody."""
+        for desktop in ("i3", "XFCE", "ubuntu:Cinnamon", "MATE", "awesome"):
+            with self.subTest(desktop=desktop), self.under(desktop):
+                self.assertEqual(hotkey.registry(), "")
+                self.assertFalse(hotkey.installs_shortcuts())
+                self.assertFalse(hotkey.shortcut_needs_restart())
+
+    def test_a_desktop_with_no_registry_is_called_what_it_calls_itself(self):
+        with self.under("ubuntu:Cinnamon"):
+            self.assertEqual(hotkey.desktop_name(), "Cinnamon")
+
+    def test_plasma_under_its_other_name(self):
+        with self.under("plasma"):
+            self.assertEqual(hotkey.registry(), "kde")
+
+    def test_a_session_that_says_nothing_keeps_the_answer_it_had(self):
+        """An unset variable is not evidence of a desktop without a registry.
+        Guessing the other way would turn a KDE session that works into one
+        that does not, which is a worse trade than the one being fixed."""
+        with self.under(""):
+            self.assertEqual(hotkey.registry(), "kde")
+
+    def test_installing_where_there_is_no_registry_says_so(self):
+        with self.under("i3"), \
+                mock.patch.object(hotkey, "install_kde_shortcut") as kde:
+            ok, message = hotkey.install_shortcut("Ctrl+Space", "dikte toggle")
+        kde.assert_not_called()
+        self.assertFalse(ok)
+        self.assertIn("i3", message)
+        self.assertIn("dikte toggle", message)
+
+    def test_removing_and_reading_back_where_there_is_no_registry(self):
+        with self.under("i3"), \
+                mock.patch.object(hotkey, "remove_kde_shortcut") as kde:
+            hotkey.remove_shortcut()
+            self.assertIsNone(hotkey.shortcut_status())
+        kde.assert_not_called()
 
     def test_the_desktop_is_matched_loosely(self):
         for desktop in ("GNOME", "ubuntu:GNOME", "gnome"):

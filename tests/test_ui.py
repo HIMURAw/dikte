@@ -268,6 +268,18 @@ class Settings(DikteTest):
         self.window(cfg.Config())._save()
         self.assertEqual(len(cfg.read_history()), 3)
 
+    def test_a_desktop_with_no_registry_offers_the_listener_not_install(self):
+        """On i3 the listener is the only thing that can work, so it is the one
+        control on the tab, and Install is not offered for a file nothing reads."""
+        if self.platform == "darwin":
+            self.skipTest("a Mac has its own answer, checked in MacSettings")
+        with mock.patch.dict("os.environ", {"XDG_CURRENT_DESKTOP": "i3"}):
+            window = self.window(cfg.Config())
+            self.assertEqual(hotkey.registry(), "")
+            self.assertFalse(window.evdev_enabled.isHidden())
+            self.assertEqual(
+                window._install_buttons(lambda: None, lambda: None), [])
+
     def test_saving_tells_whoever_is_listening(self):
         conf = cfg.Config()
         window = self.window(conf)

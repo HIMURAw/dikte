@@ -429,9 +429,31 @@ def _macos():
     return sys.platform == "darwin"
 
 
+def registry():
+    """Which shortcut registry this session keeps: gnome, kde, macos, or none.
+
+    X11 against Wayland is a different question, answered in paste.py: what
+    decides here is the desktop, because i3, XFCE, Cinnamon, MATE and the rest
+    run on X11 without KWin. Writing kglobalshortcutsrc for one of those puts
+    the combination in a file nothing reads, and then says it will start
+    working after the next login, which it never does.
+
+    An unset XDG_CURRENT_DESKTOP is not evidence of a desktop without a
+    registry, so it keeps the answer it has always had. A session that names
+    itself is taken at its word.
+    """
+    if _macos():
+        return "macos"
+    desktop = os.environ.get("XDG_CURRENT_DESKTOP", "").strip().lower()
+    if "gnome" in desktop and shutil.which("gsettings") is not None:
+        return "gnome"
+    if not desktop or "kde" in desktop or "plasma" in desktop:
+        return "kde"
+    return ""
+
+
 def _gnome():
-    desktop = os.environ.get("XDG_CURRENT_DESKTOP", "").lower()
-    return "gnome" in desktop and shutil.which("gsettings") is not None
+    return registry() == "gnome"
 
 
 def _gnome_path(desktop_id):
@@ -579,54 +601,75 @@ def installs_shortcuts():
 
     KDE and GNOME do, and something outside Dikte reads it, so the combination
     survives Dikte being closed. macOS does not: there is nothing to install,
-    nothing to remove, and Settings should not offer either.
+    nothing to remove, and Settings should not offer either. Neither does a
+    window manager that came with no registry of its own, and offering an
+    Install button there is offering a button that cannot work.
     """
-    return not _macos()
+    return registry() in ("gnome", "kde")
 
 
 def shortcut_needs_restart():
     """Whether an installed shortcut waits for the next login before it works.
 
     KWin reads kglobalshortcutsrc once, when it starts. GNOME picks a binding
-    up as it is written, and macOS never had one to write.
+    up as it is written, and the others never had one to write.
     """
-    return not _macos() and not _gnome()
+    return registry() == "kde"
 
 
 def install_shortcut(shortcut, exec_command, name="Dikte: start/stop recording",
                      desktop_id=DESKTOP_ID):
-    if _macos():
+    where = registry()
+    if where == "macos":
         _REGISTERED[desktop_id] = shortcut
         return True, t(
             "Shortcut saved: {shortcut}\nDikte holds this one itself while it "
             "is running, so it works as soon as the settings are saved.",
             shortcut=shortcut,
         )
-    if _gnome():
+    if where == "gnome":
         return install_gnome_shortcut(shortcut, exec_command, name, desktop_id)
-    return install_kde_shortcut(shortcut, exec_command, name, desktop_id)
+    if where == "kde":
+        return install_kde_shortcut(shortcut, exec_command, name, desktop_id)
+    # Saying no here is the whole point: writing KDE's file on a desktop that
+    # is not KDE reports success for a key that will never fire.
+    return False, t(
+        "{desktop} keeps no shortcut registry Dikte can write to. Turn on the "
+        "built-in listener under Shortcuts, or bind this command to a key in "
+        "your own configuration:\n  {command}",
+        desktop=desktop_name(), command=exec_command,
+    )
 
 
 def remove_shortcut(desktop_id=DESKTOP_ID):
-    if _macos():
+    where = registry()
+    if where == "macos":
         _REGISTERED.pop(desktop_id, None)
-    elif _gnome():
+    elif where == "gnome":
         remove_gnome_shortcut(desktop_id)
-    else:
+    elif where == "kde":
         remove_kde_shortcut(desktop_id)
 
 
 def shortcut_status(desktop_id=DESKTOP_ID):
-    if _macos():
+    where = registry()
+    if where == "macos":
         return _REGISTERED.get(desktop_id)
-    return (gnome_shortcut_status(desktop_id) if _gnome()
-            else kde_shortcut_status(desktop_id))
+    if where == "gnome":
+        return gnome_shortcut_status(desktop_id)
+    if where == "kde":
+        return kde_shortcut_status(desktop_id)
+    return None
 
 
 def desktop_name():
-    if _macos():
-        return "macOS"
-    return "GNOME" if _gnome() else "KDE"
+    where = registry()
+    if where != "":
+        return {"macos": "macOS", "gnome": "GNOME", "kde": "KDE"}[where]
+    # Its own name, as it gave it: "i3", "XFCE", "ubuntu:Cinnamon" -> Cinnamon.
+    # Better in a sentence about that desktop than a word standing in for it.
+    said = os.environ.get("XDG_CURRENT_DESKTOP", "").strip()
+    return said.split(":")[-1] or "This desktop"
 
 
 # --- KDE ------------------------------------------------------------------

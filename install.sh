@@ -128,9 +128,19 @@ if [[ "$SHORTCUT" == "$CANCEL_SHORTCUT" ]]; then
   CANCEL_SHORTCUT=""
 fi
 
+# Asked rather than guessed at here, so that the desktop this script talks
+# about is the one Dikte will actually write to. Guessing "not GNOME means
+# KDE" is what told an i3 user their shortcuts would arrive after a login.
+registry="$(PYTHONPATH="$DIR" "$PY" -c 'import hotkey; print(hotkey.registry())' \
+            2>/dev/null || echo kde)"
+
 register() {   # which  combination  label
   if out="$("$PY" "$DIR/dikte.py" shortcut install "$1" --combo "$2" 2>&1)"; then
     ok "$3: $2"
+  elif [[ -z "$registry" ]]; then
+    # There is nowhere to install it, and what it says instead is the whole
+    # answer: which listener to turn on, and the command to bind by hand.
+    warn "$out"
   else
     # One line: the rest of what it has to say about KWin is printed below.
     warn "${out%%$'\n'*}"
@@ -142,7 +152,7 @@ if python3 -c 'import PyQt6.QtWidgets' 2>/dev/null; then
   if [[ -n "$CANCEL_SHORTCUT" ]]; then
     register cancel "$CANCEL_SHORTCUT" "Discard the recording"
   fi
-  if [[ "${XDG_CURRENT_DESKTOP:-}" != *[Gg][Nn][Oo][Mm][Ee]* ]]; then
+  if [[ "$registry" == "kde" ]]; then
     warn "KWin only reads these at startup, so they go live after your next"
     say  "login. Until then open Settings → Shortcuts and turn on the"
     say  "built-in listener to use them right away."
