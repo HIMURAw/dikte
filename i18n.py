@@ -120,6 +120,23 @@ TR = {
     "{tool} failed: {error}": "{tool} hatası: {error}",
     "Is ydotoold running? (systemctl --user status ydotool)":
         "ydotoold çalışıyor mu? (systemctl --user status ydotool)",
+    "{desktop} keeps no shortcut registry Dikte can write to. Turn on the "
+    "built-in listener under Shortcuts, or bind this command to a key in your "
+    "own configuration:\n  {command}":
+        "{desktop} masaüstünün Dikte'nin yazabileceği bir kısayol kaydı yok. "
+        "Kısayollar altından dahili dinleyiciyi aç, ya da bu komutu kendi "
+        "yapılandırmandaki bir tuşa bağla:\n  {command}",
+    "Use the built-in listener (/dev/input), the only way a global key works "
+    "on {desktop}":
+        "Dahili dinleyiciyi kullan (/dev/input); {desktop} üzerinde global bir "
+        "tuşun çalışmasının tek yolu bu",
+    "{desktop} keeps no shortcut registry, so there is nothing to install "
+    "into. Use the listener above, or bind the commands to keys in your own "
+    "configuration: dikte toggle, dikte cancel, dikte ask, dikte meeting.":
+        "{desktop} masaüstü kısayol kaydı tutmuyor, yani kurulacak bir yer "
+        "yok. Yukarıdaki dinleyiciyi kullan, ya da komutları kendi "
+        "yapılandırmandaki tuşlara bağla: dikte toggle, dikte cancel, "
+        "dikte ask, dikte meeting.",
     "macOS has not been told to let Dikte press keys. Turn Dikte on under "
     "System Settings → Privacy & Security → Accessibility.":
         "macOS, Dikte'nin tuşlara basmasına henüz izin vermiyor. Sistem Ayarları "

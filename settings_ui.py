@@ -1258,33 +1258,46 @@ class SettingsWindow(QDialog):
         )
         layout.addLayout(form)
 
-        self.evdev_enabled = QCheckBox(t(
-            "Use the built-in listener (/dev/input), for when the {desktop} "
-            "shortcut is not active yet", desktop=hotkey.desktop_name()
-        ))
+        where = hotkey.registry()
+        self.evdev_enabled = QCheckBox(
+            t("Use the built-in listener (/dev/input), the only way a global "
+              "key works on {desktop}", desktop=hotkey.desktop_name())
+            if where == "" else
+            t("Use the built-in listener (/dev/input), for when the {desktop} "
+              "shortcut is not active yet", desktop=hotkey.desktop_name())
+        )
         self.evdev_enabled.setToolTip(t(
             "Works immediately, no session restart. The only difference: the key "
             "combination also reaches the focused application."
         ))
         layout.addWidget(self.evdev_enabled)
-        # Nothing to wait for where nothing is installed: there the listener is
-        # the mechanism, always on, and not a choice to offer.
-        self.evdev_enabled.setVisible(hotkey.installs_shortcuts())
+        # A Mac is the one place it is not a choice: Carbon holds the
+        # combination while Dikte runs, so there is nothing to wait for and
+        # nothing to switch on. Everywhere else it is offered, and where there
+        # is no registry it is not a stopgap but the whole mechanism.
+        self.evdev_enabled.setVisible(where != "macos")
 
-        if hotkey.shortcut_needs_restart():
+        if where == "kde":
             explanation = t(
                 "KWin only reads shortcut settings at startup. After 'Install' the "
                 "shortcut shows up under System Settings → Shortcuts, but it will "
                 "not fire until you log out and back in. Until then, use the "
                 "built-in listener."
             )
-        elif hotkey.installs_shortcuts():
+        elif where == "gnome":
             explanation = t("The shortcut starts working as soon as it is installed.")
-        else:
+        elif where == "macos":
             explanation = t(
                 "Dikte asks macOS for these combinations itself, while it is "
                 "running. Nothing is installed, and no other application receives "
                 "them in the meantime."
+            )
+        else:
+            explanation = t(
+                "{desktop} keeps no shortcut registry, so there is nothing to "
+                "install into. Use the listener above, or bind the commands to "
+                "keys in your own configuration: dikte toggle, dikte cancel, "
+                "dikte ask, dikte meeting.", desktop=hotkey.desktop_name()
             )
         note = QLabel(explanation)
         note.setWordWrap(True)
