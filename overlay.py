@@ -46,6 +46,7 @@ class Overlay(QWidget):
         # work carries on and its result still shows up.
         self.dismissable = dismissable
         self.muted = False
+        self.paused = False
         self._stacked = False
         self.state = "idle"
         self.message = ""
@@ -103,8 +104,18 @@ class Overlay(QWidget):
         self.seconds = 0.0
         self.levels = [0.0] * BARS
         self.muted = False   # a new run starts visible, whatever the last one did
+        self.paused = False
         self._hide_timer.stop()
         self._appear()
+
+    def set_paused(self, paused):
+        """A pause has to look like one, or it reads as a recording that died.
+
+        The ribbon stops moving and the dot stops pulsing, which is the whole
+        difference between "waiting for you" and "not listening any more".
+        """
+        self.paused = bool(paused)
+        self.update()
 
     def show_meeting(self):
         """Both channels at once: your voice up, the other side down."""
@@ -243,7 +254,7 @@ class Overlay(QWidget):
         # the corner when it does rather than leaving a gap where it was.
         if self.below is not None and self.below.showing != self._stacked:
             self._reposition()
-        if self.state in LIVE:
+        if self.state in LIVE and not self.paused:
             # keep the ribbon moving even through a pause in speech
             self.levels = self.levels[1:] + [self.levels[-1] * 0.72]
         if self.state == "meeting":
@@ -285,7 +296,14 @@ class Overlay(QWidget):
     def _draw_indicator(self, painter, accent):
         cx, cy = 26.0, self.height() / 2
         painter.setPen(Qt.PenStyle.NoPen)
-        if self.state in LIVE:
+        if self.state in LIVE and self.paused:
+            # The two bars everything else in the world uses for this, standing
+            # still where a recording dot would be pulsing.
+            painter.setBrush(MUTED)
+            for offset in (-4.0, 1.5):
+                painter.drawRoundedRect(
+                    QRectF(cx + offset, cy - 6.5, 2.5, 13), 1.2, 1.2)
+        elif self.state in LIVE:
             pulse = 0.62 + 0.38 * (0.5 + 0.5 * math.sin(self._phase * 1.6))
             glow = QColor(accent)
             glow.setAlphaF(0.22 * pulse)

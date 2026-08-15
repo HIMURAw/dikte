@@ -172,6 +172,11 @@ class Dikte:
         self.ask_cancel_action.setEnabled(False)
         self.menu.addAction(self.ask_cancel_action)
 
+        self.pause_action = QAction(t("Pause the recording"), self.menu)
+        self.pause_action.triggered.connect(self._toggle_pause)
+        self.pause_action.setEnabled(False)
+        self.menu.addAction(self.pause_action)
+
         self.cancel_action = QAction(t("Discard the recording"), self.menu)
         # The inner method, so that a menu click is never mistaken for the KDE
         # shortcut echoing the built-in listener's press.
@@ -282,6 +287,9 @@ class Dikte:
             or (self.ask_state == IDLE and not self.recording)
         )
         self.reset_action.setEnabled(self.ask_state != BUSY)
+        self.pause_action.setText(t("Resume the recording") if self.recorder.paused
+                                  else t("Pause the recording"))
+        self.pause_action.setEnabled(self.recording)
         self.cancel_action.setEnabled(self.recording)
         # A command to the agent is the one job long enough to be worth calling
         # off once it is already running.
@@ -336,6 +344,9 @@ class Dikte:
     def cancel(self):
         self._external("cancel", self._cancel)
 
+    def toggle_pause(self):
+        self._external("pause", self._toggle_pause)
+
     def _external(self, name, handler):
         # The built-in listener sees the key press the instant it happens, so a
         # toggle arriving right behind one is the KDE shortcut catching up on
@@ -357,7 +368,7 @@ class Dikte:
             timer = self.last_evdev[name] = QElapsedTimer()
         timer.restart()
         handlers = {"meeting": self._toggle_meeting, "ask": self._toggle_ask,
-                    "cancel": self._cancel}
+                    "cancel": self._cancel, "pause": self._toggle_pause}
         handlers.get(name, self._toggle)()
 
     def _retire_listener(self):
@@ -392,6 +403,7 @@ class Dikte:
         else:
             handler = {
                 "cancel": self.cancel,
+                "pause": self.toggle_pause,
                 "ask-cancel": self.cancel_ask,
                 "ask-reset": self.reset_conversation,
                 "meeting-cancel": self.cancel_meeting,
@@ -474,6 +486,7 @@ class Dikte:
             "ok": True,
             "running": True,
             "dictation": self.state,
+            "paused": self.recorder.paused,
             "ask": self.ask_state,
             "meeting": self.meeting_state,
             "meeting_base": self.meetings.running_base,
@@ -538,8 +551,40 @@ class Dikte:
         self.recorder_owner = owner
         self._run_id += 1
         self.elapsed.restart()
+        self._paused_ms = 0
+        self._pause_started = None
         self.ticker.start()
         self.recorder.start(self.conf["mic_target"], self.conf["max_seconds"])
+
+    def _recorded_ms(self):
+        """How much of the recording is audio, which is not how long it has
+        been going: a pause spends wall clock and records none of it."""
+        spent = self._paused_ms
+        if self._pause_started is not None:
+            spent += self.elapsed.elapsed() - self._pause_started
+        return max(0, self.elapsed.elapsed() - spent)
+
+    def _toggle_pause(self):
+        """Pause what is being recorded, or pick it up again.
+
+        Only dictation and only while it is recording. The microphone is not
+        handed back, so what comes after the pause starts at the word it
+        starts at rather than a moment into it.
+        """
+        if not self.recording:
+            return
+        if self.recorder.paused:
+            if not self.recorder.resume():
+                return
+            if self._pause_started is not None:
+                self._paused_ms += self.elapsed.elapsed() - self._pause_started
+                self._pause_started = None
+        else:
+            if not self.recorder.pause():
+                return
+            self._pause_started = self.elapsed.elapsed()
+        self._recording_overlay().set_paused(self.recorder.paused)
+        self._refresh_tray()
 
     def stop(self):
         if self.state != RECORDING:
@@ -602,8 +647,10 @@ class Dikte:
         self._recording_overlay().push_level(level)
 
     def _tick(self):
-        seconds = self.elapsed.elapsed() / 1000.0
+        seconds = self._recorded_ms() / 1000.0
         self._recording_overlay().set_seconds(seconds)
+        # Measured against the audio rather than the clock, so that thinking
+        # for five minutes with the recording paused does not end it.
         if seconds >= self.conf["max_seconds"]:
             (self.stop_ask if self.recorder_owner == ASK else self.stop)()
 

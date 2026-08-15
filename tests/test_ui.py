@@ -98,6 +98,7 @@ CHANGED = {
     "file_cleanup": False,
     "shortcut": "Ctrl+Alt+Space",
     "cancel_shortcut": "Meta+Shift+Space",
+    "pause_shortcut": "Meta+Shift+P",
     "evdev_hotkey": True,
     "history_limit": 50,
 }

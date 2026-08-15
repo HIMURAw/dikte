@@ -31,6 +31,7 @@ DESKTOP_ID = "dikte-toggle.desktop"
 CANCEL_DESKTOP_ID = "dikte-cancel.desktop"
 MEETING_DESKTOP_ID = "dikte-meeting.desktop"
 ASK_DESKTOP_ID = "dikte-ask.desktop"
+PAUSE_DESKTOP_ID = "dikte-pause.desktop"
 APPLICATIONS_DIR = pathlib.Path.home() / ".local/share/applications"
 DESKTOP_FILE = APPLICATIONS_DIR / DESKTOP_ID
 SHORTCUTS_FILE = pathlib.Path.home() / ".config/kglobalshortcutsrc"
@@ -51,6 +52,9 @@ SHORTCUTS = {
                        "cancel_shortcut", ""),
     "ask": Shortcut("ask", ASK_DESKTOP_ID, "Dikte: ask Claude Code",
                     "assistant_shortcut", ""),
+    "pause": Shortcut("pause", PAUSE_DESKTOP_ID,
+                      "Dikte: pause/resume the recording",
+                      "pause_shortcut", ""),
     "meeting": Shortcut("meeting", MEETING_DESKTOP_ID,
                         "Dikte: start/end a meeting recording",
                         "meeting_shortcut", ""),
