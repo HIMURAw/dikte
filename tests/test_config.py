@@ -110,6 +110,40 @@ class Saving(DikteTest):
         conf.save()
         self.assertEqual(i18n.language(), "tr")
 
+    def test_a_setting_written_while_this_one_was_open_is_not_undone(self):
+        """The settings window holds a Config for as long as it is open, and
+        `dikte config set` writes between two of its keystrokes. Saving one
+        setting used to put the whole table back as it was read."""
+        window = cfg.Config()                    # opened
+        window["cleanup_model"] = "some/model"   # somebody types in a field
+
+        elsewhere = cfg.Config()                 # dikte config set …
+        elsewhere["shortcut"] = "Meta+Shift+F23"
+        elsewhere.save()
+
+        window.save()                            # Save is pressed
+        stored = cfg.Config()
+        self.assertEqual(stored["shortcut"], "Meta+Shift+F23")
+        self.assertEqual(stored["cleanup_model"], "some/model")
+
+    def test_the_later_save_wins_where_both_changed_the_same_one(self):
+        first, second = cfg.Config(), cfg.Config()
+        first["cleanup_model"] = "first/model"
+        second["cleanup_model"] = "second/model"
+        first.save()
+        second.save()
+        self.assertEqual(cfg.Config()["cleanup_model"], "second/model")
+
+    def test_what_was_saved_is_what_the_object_holds_afterwards(self):
+        """Whatever the merge kept has to be readable through the object that
+        did the saving, or the next save writes against a stale reading."""
+        window = cfg.Config()
+        elsewhere = cfg.Config()
+        elsewhere["shortcut"] = "Meta+Shift+F23"
+        elsewhere.save()
+        window.save()
+        self.assertEqual(window["shortcut"], "Meta+Shift+F23")
+
 
 class Keys(DikteTest):
     def test_a_stored_key_is_used(self):
