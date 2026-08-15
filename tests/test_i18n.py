@@ -5,6 +5,8 @@ whose placeholder was renamed raises KeyError at the moment the message is
 shown, which is exactly when nobody is watching a terminal.
 """
 
+import ast
+import pathlib
 import string
 import unittest
 from unittest import mock
@@ -12,9 +14,36 @@ from unittest import mock
 import i18n
 from tests.support import DikteTest
 
+SOURCE_DIR = pathlib.Path(__file__).resolve().parent.parent
+
 
 def placeholders(text):
     return {name for _, name, _, _ in string.Formatter().parse(text) if name}
+
+
+def translated_strings():
+    """Every literal handed to t(), as {string: 'file:line'}.
+
+    Read out of the source rather than kept as a second list, because a list
+    is one more thing to forget to add to. A string built at run time is
+    invisible here and has to be looked after by hand; a name() call is left
+    out, since a proper noun is inflected rather than translated.
+    """
+    found = {}
+    for path in sorted(SOURCE_DIR.glob("*.py")):
+        if path.name == "i18n.py":
+            continue
+        tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            called = node.func
+            if not isinstance(called, ast.Name) or called.id != "t":
+                continue
+            if node.args and isinstance(node.args[0], ast.Constant) \
+                    and isinstance(node.args[0].value, str):
+                found[node.args[0].value] = f"{path.name}:{node.lineno}"
+    return found
 
 
 class Resolve(unittest.TestCase):
@@ -116,6 +145,22 @@ class Table(unittest.TestCase):
                 continue
             with self.subTest(source=source[:50]):
                 translated.format(**{key: "x" for key in names})
+
+    def test_every_string_the_code_shows_has_a_turkish_one(self):
+        """The half of a feature that is easy to forget.
+
+        A window built in English works, so nothing fails and nothing is
+        noticed: the strings pile up until a whole tab is one language and the
+        rest another. Reading the calls out of the source is what turns that
+        into something the suite can say out loud.
+        """
+        missing = sorted(
+            source for source, where in translated_strings().items()
+            if source not in i18n.TR
+        )
+        self.assertEqual(missing, [], "no Turkish for: " + "; ".join(
+            f"{text[:60]!r}" for text in missing[:8]
+        ))
 
 
 if __name__ == "__main__":

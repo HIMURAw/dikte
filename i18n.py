@@ -652,4 +652,128 @@ TR = {
     "This one is being written up right now.": "Bunun tutanağı şu anda çıkarılıyor.",
     "Delete this meeting, its minutes and its recording?":
         "Bu toplantı, tutanağı ve ses kaydı silinsin mi?",
+
+    # --- local models: fetching, verifying, serving --------------------------
+    # Everything whisper.cpp and llama.cpp say on their way in. This is the
+    # first screen somebody who wants to stay off the cloud reaches, so it is
+    # the last place that should have been left in English.
+    "Local whisper": "Yerel whisper",
+    "Local model": "Yerel model",
+    "Runs on this machine, on llama.cpp.": "Bu makinede, llama.cpp üzerinde çalışır.",
+    "On this machine": "Bu makinede",
+
+    # downloading
+    "Download": "İndir",
+    "Downloading…": "İndiriliyor…",
+    "Downloading: {done} of {total}{share}":
+        "İndiriliyor: {total} içinden {done}{share}",
+    "Download stopped.": "İndirme durduruldu.",
+    "The download stopped early ({done} of {total}).":
+        "İndirme erken bitti ({total} içinden {done}).",
+    "Could not download {name}: HTTP {code}": "{name} indirilemedi: HTTP {code}",
+    "Could not download {name}: {error}": "{name} indirilemedi: {error}",
+    "Could not write {name}: {error}": "{name} yazılamadı: {error}",
+    "Could not create {path}: {error}": "{path} oluşturulamadı: {error}",
+    "Could not unpack {name}: {error}": "{name} açılamadı: {error}",
+    "Could not install {name}: {error}": "{name} kurulamadı: {error}",
+    "Could not delete the model: {error}": "Model silinemedi: {error}",
+    "{name} was not in the download.": "{name} indirilenin içinden çıkmadı.",
+    "{repo} {tag} has no build for this machine.":
+        "{repo} {tag} bu makine için derleme sunmuyor.",
+
+    # what the checksum is for
+    "{name} is published without a checksum, so there is no way to tell what "
+    "arrived. Nothing was installed.":
+        "{name} checksum'suz yayınlanmış, gelenin ne olduğunu anlamanın yolu "
+        "yok. Hiçbir şey kurulmadı.",
+    "{name} does not match its published checksum. Nothing was installed.":
+        "{name} yayınlanan checksum'ıyla uyuşmuyor. Hiçbir şey kurulmadı.",
+    "{name} is longer than it said it would be.": "{name} bildirdiğinden uzun.",
+
+    # the servers
+    "Could not start {name}: {error}": "{name} başlatılamadı: {error}",
+    "{name} did not start: {error}": "{name} başlamadı: {error}",
+    "no output": "çıktı yok",
+    "whisper.cpp is not installed. Settings → API and models → Download.":
+        "whisper.cpp kurulu değil. Ayarlar → API ve modeller → İndir.",
+    "No whisper model has been downloaded yet. Settings → API and models → "
+    "Download.":
+        "Henüz bir whisper modeli indirilmedi. Ayarlar → API ve modeller → İndir.",
+    "llama.cpp is not installed. Settings → API and models → Download.":
+        "llama.cpp kurulu değil. Ayarlar → API ve modeller → İndir.",
+    "No local cleanup model has been downloaded yet. Settings → API and models "
+    "→ Download.":
+        "Henüz yerel bir temizleme modeli indirilmedi. Ayarlar → API ve "
+        "modeller → İndir.",
+
+    # what GitHub and Hugging Face answered
+    "{url} answered HTTP {code}.": "{url} HTTP {code} döndürdü.",
+    "Could not reach {url}: {error}": "{url} adresine ulaşılamadı: {error}",
+    "Could not read the answer from {url}: {error}":
+        "{url} adresinden gelen cevap okunamadı: {error}",
+    "{repo} has no downloadable release.":
+        "{repo} indirilebilir bir sürüm sunmuyor.",
+    "{repo} did not return a file list.": "{repo} dosya listesi döndürmedi.",
+    "Hugging Face did not return a model list.":
+        "Hugging Face model listesi döndürmedi.",
+
+    # settings: what is installed and what is not
+    "Program": "Program",
+    "Publisher": "Yayıncı",
+    "Delete": "Sil",
+    "Delete model": "Modeli sil",
+    "Delete {name} from this machine?": "{name} bu makineden silinsin mi?",
+    "Not installed.": "Kurulu değil.",
+    "Installed on the system: {path}": "Sistemde kurulu: {path}",
+    "Downloaded, version {version}.": "İndirildi, sürüm {version}.",
+    "Fetching the model list…": "Model listesi alınıyor…",
+    "downloaded": "indirildi",
+    "not downloaded": "indirilmedi",
+    "Nothing downloaded yet.": "Henüz bir şey indirilmedi.",
+    "Ready: {name}.": "Hazır: {name}.",
+    "{name} has not been downloaded yet.": "{name} henüz indirilmedi.",
+    "A Hugging Face repository of GGUF files. The list is fetched; any other "
+    "one can be typed in.":
+        "GGUF dosyaları barındıran bir Hugging Face deposu. Liste çekilir, "
+        "başkasını da elle yazabilirsin.",
+
+    # settings: how the local models run
+    "Automatic": "Otomatik",
+    "Threads": "İş parçacığı",
+    "Use the graphics card": "Ekran kartını kullan",
+    "whisper.cpp reaches the card through CUDA, ROCm or Vulkan when the build "
+    "it is running was made with one. A build without any of them runs on the "
+    "processor whatever this says.":
+        "whisper.cpp, çalıştırdığı derleme bunlardan biriyle yapılmışsa karta "
+        "CUDA, ROCm ya da Vulkan üzerinden ulaşır. Hiçbiri olmayan bir derleme, "
+        "burada ne yazarsa yazsın işlemcide çalışır.",
+    "Load the model when Dikte starts": "Modeli Dikte açılırken yükle",
+    "A large model takes a second or two to load. Loading it up front spends "
+    "that once instead of on the first dictation, at the cost of the memory it "
+    "sits in.":
+        "Büyük bir model bir iki saniyede yükleniyor. Baştan yüklemek bu süreyi "
+        "ilk diktede değil bir kez baştan harcar; karşılığı da modelin kapladığı "
+        "bellek.",
+    "An LLM is slower to load than a whisper model and sits in more memory. Off "
+    "means it is loaded on the first cleanup instead.":
+        "Bir LLM whisper modelinden yavaş yükleniyor ve daha çok bellek "
+        "kaplıyor. Kapalıyken ilk temizlemede yüklenir.",
+    "OpenRouter is the quickest and the only one that needs nothing installed. "
+    "llama.cpp runs here, on a model downloaded below. Claude Code and Codex "
+    "clean up on the subscription you already have, without a second key, and "
+    "take a few seconds longer because each one opens a session to do it.":
+        "OpenRouter en hızlısı ve hiçbir şey kurmayı gerektirmeyen tek "
+        "seçenek. llama.cpp burada, aşağıdan indirilen bir modelle çalışır. "
+        "Claude Code ve Codex temizlemeyi zaten sahip olduğun abonelikle, "
+        "ikinci bir anahtar istemeden yapar; her biri bunun için bir oturum "
+        "açtığından birkaç saniye uzun sürer.",
+    "A model trained to think will think unless it is told not to, and spending "
+    "300 tokens of reasoning on a comma is 300 tokens of waiting. Off is what "
+    "cleanup wants.":
+        "Düşünmeye eğitilmiş bir model, aksi söylenmedikçe düşünür; bir virgül "
+        "için 300 token akıl yürütmek 300 token beklemek demektir. Temizlemenin "
+        "istediği Kapalı.",
+    "The cleanup model spent its whole reply on thinking. Set Thinking to “Off”.":
+        "Temizleme modeli cevabının tamamını düşünmeye harcadı. Düşünme'yi "
+        "“Kapalı” yap.",
 }
