@@ -206,6 +206,12 @@ itself. The difference: it does not swallow the key, so `Ctrl+Space` also reache
 the focused application (some editors will pop up autocomplete). The listener
 needs your user in the `input` group: `sudo usermod -aG input $USER`.
 
+The listener is also what **Hold the key to record, let go to send** needs,
+on the same tab: a shortcut registry reports that a combination was pressed
+and never that it was let go of, so the release only exists here. Held down,
+`Ctrl+Space` records while you hold it and sends the moment you stop, which
+leaves no second press to forget and nothing recording that you meant to end.
+
 ## Layout
 
 ```

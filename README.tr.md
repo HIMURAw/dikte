@@ -204,6 +204,12 @@ yakalar. Tek farkı: tuşu yutmaz, yani `Ctrl+Space` odaktaki uygulamaya da ilet
 (bazı editörlerde otomatik tamamlama açılabilir). Dinleyici kullanıcının `input`
 grubunda olmasını gerektirir: `sudo usermod -aG input $USER`.
 
+Aynı sekmedeki **Kaydetmek için tuşu basılı tut, göndermek için bırak**
+seçeneği de bu dinleyiciye dayanır: kısayol kaydı bir kombinasyona
+basıldığını bildirir, bırakıldığını hiç bildirmez, yani bırakma olayı
+yalnızca burada var. Basılı tuttuğun sürece kaydeder, bıraktığın anda
+gönderir; ne unutulacak ikinci bir basış kalır ne de açık kalan bir kayıt.
+
 ## Dosyalar
 
 ```

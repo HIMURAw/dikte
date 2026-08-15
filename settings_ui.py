@@ -1306,11 +1306,22 @@ class SettingsWindow(QDialog):
             "combination also reaches the focused application."
         ))
         layout.addWidget(self.evdev_enabled)
-        # A Mac is the one place it is not a choice: Carbon holds the
+        self.hold_to_talk = QCheckBox(t("Hold the key to record, let go to send"))
+        self.hold_to_talk.setToolTip(t(
+            "A walkie-talkie rather than a switch, which suits a sentence at a "
+            "time: there is no second press to forget, and nothing is left "
+            "recording. It needs the built-in listener above, because a "
+            "desktop shortcut reports that a key was pressed and never that it "
+            "was let go of."
+        ))
+        layout.addWidget(self.hold_to_talk)
+        # A Mac is the one place neither is a choice: Carbon holds the
         # combination while Dikte runs, so there is nothing to wait for and
-        # nothing to switch on. Everywhere else it is offered, and where there
-        # is no registry it is not a stopgap but the whole mechanism.
+        # nothing to switch on. Everywhere else the listener is offered, and
+        # where there is no registry it is not a stopgap but the whole
+        # mechanism. Holding a key goes with it, being the half only it sees.
         self.evdev_enabled.setVisible(where != "macos")
+        self.hold_to_talk.setVisible(where != "macos")
 
         if where == "kde":
             explanation = t(
@@ -1600,6 +1611,7 @@ class SettingsWindow(QDialog):
         for which, (box, _status, _missing) in self._shortcut_rows.items():
             box.setCurrentText(conf[hotkey.SHORTCUTS[which].setting])
         self.evdev_enabled.setChecked(conf["evdev_hotkey"])
+        self.hold_to_talk.setChecked(conf["hold_to_talk"])
 
         self.history_limit.setValue(max(0, int(conf["history_limit"])))
 
@@ -1717,6 +1729,7 @@ class SettingsWindow(QDialog):
             conf[spec.setting] = (box.currentText().strip()
                                   or hotkey.default_combo(which))
         conf["evdev_hotkey"] = self.evdev_enabled.isChecked()
+        conf["hold_to_talk"] = self.hold_to_talk.isChecked()
         conf["history_limit"] = self.history_limit.value()
         conf.save()
         # A lowered limit should bite now, not on the next dictation.

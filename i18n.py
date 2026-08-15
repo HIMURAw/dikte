@@ -678,6 +678,16 @@ TR = {
         "Mikrofonu bırakmaz ama duyduğunu kaydetmeyi durdurur, böylece mola "
         "transkripte girmez. Kayıt kaldığı yerden devam eder ve duraklamada "
         "geçen süre en uzun kayıt sınırına sayılmaz.",
+    "Hold the key to record, let go to send":
+        "Kaydetmek için tuşu basılı tut, göndermek için bırak",
+    "A walkie-talkie rather than a switch, which suits a sentence at a time: "
+    "there is no second press to forget, and nothing is left recording. It "
+    "needs the built-in listener above, because a desktop shortcut reports "
+    "that a key was pressed and never that it was let go of.":
+        "Anahtar değil telsiz gibi; tek cümlelik diktelere yakışır: unutulacak "
+        "ikinci bir basış yok, açık kalan bir kayıt da yok. Yukarıdaki dahili "
+        "dinleyiciye ihtiyaç duyar, çünkü masaüstü kısayolu tuşa basıldığını "
+        "bildirir, bırakıldığını hiç bildirmez.",
     "No KDE shortcut installed. The tray menu starts a meeting too.":
         "KDE kısayolu kurulu değil. Toplantıyı tepsi menüsünden de başlatabilirsin.",
     "System instruction given to the minutes model.":

@@ -100,6 +100,7 @@ CHANGED = {
     "cancel_shortcut": "Meta+Shift+Space",
     "pause_shortcut": "Meta+Shift+P",
     "evdev_hotkey": True,
+    "hold_to_talk": True,
     "history_limit": 50,
 }
 

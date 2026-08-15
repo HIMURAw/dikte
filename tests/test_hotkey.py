@@ -2,6 +2,7 @@
 
 import contextlib
 import os
+import struct
 import subprocess
 import unittest
 from unittest import mock
@@ -168,6 +169,56 @@ class Bindings(DikteTest):
                                             "ask": "Ctrl+Alt+Space"}))
             thread.assert_called_once()
         self.assertEqual(len(listener._bindings[57]), 2)
+
+    def press_and_release(self, shortcut, keys):
+        """Feed raw evdev events at the loop and collect what came out.
+
+        `keys` is (code, value): 1 pressed, 0 released. The loop is run by hand
+        rather than on its thread, so the events arrive in a known order.
+        """
+        listener = hotkey.EvdevHotkey()
+        self.addCleanup(listener.stop)
+        pressed, released = [], []
+        listener.triggered.connect(pressed.append)
+        listener.released.connect(released.append)
+        with mock.patch.object(listener, "_open_devices", return_value=[99]), \
+                mock.patch.object(hotkey.threading, "Thread"):
+            listener.start({"toggle": shortcut})
+
+        events = b"".join(
+            struct.pack(hotkey.EvdevHotkey.EVENT_FMT, 0, 0, hotkey.EV_KEY,
+                        code, value)
+            for code, value in keys
+        )
+        with mock.patch.object(hotkey.select, "select",
+                               side_effect=[([99], [], []), SystemExit]), \
+                mock.patch.object(hotkey.os, "read", return_value=events), \
+                contextlib.suppress(SystemExit):
+            listener._loop([99])
+        return pressed, released
+
+    def test_a_key_held_and_let_go_of_is_reported_both_times(self):
+        pressed, released = self.press_and_release(
+            "Ctrl+Space", [(29, 1), (57, 1), (57, 0), (29, 0)])
+        self.assertEqual(pressed, ["toggle"])
+        self.assertEqual(released, ["toggle"])
+
+    def test_the_release_lands_even_with_the_modifier_let_go_of_first(self):
+        """Which is how anybody actually lets go of Ctrl+Space. By then the
+        combination no longer matches, so what says the release is ours is
+        that the press was."""
+        pressed, released = self.press_and_release(
+            "Ctrl+Space", [(29, 1), (57, 1), (29, 0), (57, 0)])
+        self.assertEqual(pressed, ["toggle"])
+        self.assertEqual(released, ["toggle"])
+
+    def test_a_key_let_go_of_that_never_fired_is_not_a_release(self):
+        """Space on its own is not Ctrl+Space, and letting it go is not the
+        end of a recording nobody started."""
+        pressed, released = self.press_and_release(
+            "Ctrl+Space", [(57, 1), (57, 0)])
+        self.assertEqual(pressed, [])
+        self.assertEqual(released, [])
 
     def test_starting_and_discarding_do_not_fire_on_each_other(self):
         """The two defaults are one modifier apart on the same key code, so the

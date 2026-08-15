@@ -438,6 +438,10 @@ DEFAULTS = {
     # Off until it is asked for, like every shortcut but the toggle: a key
     # taken by default is a key taken from whatever already had it.
     "pause_shortcut": "",
+    # Hold the key to record and let go to send, rather than pressing twice.
+    # Only the built-in listener can do it: a desktop registry reports that a
+    # combination was pressed and never that it was let go of.
+    "hold_to_talk": False,
     "evdev_hotkey": False,
     "overlay_corner": "bottom-left",
     "keep_audio": False,

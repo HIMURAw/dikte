@@ -131,6 +131,7 @@ class Dikte:
         self.meetings.finished.connect(self._on_meeting_finished)
         self.meetings.failed.connect(self._on_meeting_failed)
         self.evdev.triggered.connect(self._on_evdev)
+        self.evdev.released.connect(self._on_evdev_released)
         self.evdev.failed.connect(self._on_error)
 
         self.elapsed = QElapsedTimer()
@@ -356,8 +357,14 @@ class Dikte:
         # Where nothing was installed there is no shortcut to catch up, and
         # retiring the listener would leave the keys with nowhere to arrive.
         timer = self.last_evdev.get(name)
-        if (hotkey.installs_shortcuts() and self.evdev.running
-                and timer is not None and timer.elapsed() < ECHO_MS):
+        echo = (self.evdev.running and timer is not None
+                and timer.elapsed() < ECHO_MS)
+        if echo and self._holding():
+            # The same press, arriving twice, and the listener is not the one
+            # to drop: holding a key is the one thing the registry cannot
+            # report. The registry's copy is what goes unanswered instead.
+            return
+        if hotkey.installs_shortcuts() and echo:
             self._retire_listener()
             return
         handler()
@@ -367,9 +374,34 @@ class Dikte:
         if timer is None:
             timer = self.last_evdev[name] = QElapsedTimer()
         timer.restart()
+        if self._holding() and name in ("toggle", ASK):
+            # Pressing is the whole of starting here. Toggling would end a
+            # recording that the last press started and the last release
+            # already ended, which cannot happen, and would read as the key
+            # doing nothing every other time if it could.
+            (self.start_ask if name == ASK else self.start)()
+            return
         handlers = {"meeting": self._toggle_meeting, "ask": self._toggle_ask,
                     "cancel": self._cancel, "pause": self._toggle_pause}
         handlers.get(name, self._toggle)()
+
+    def _on_evdev_released(self, name):
+        """The other half of holding a key down, which only this listener sees."""
+        if not self._holding():
+            return
+        if name == ASK and self.ask_state == RECORDING:
+            self.stop_ask()
+        elif name == "toggle" and self.state == RECORDING:
+            self.stop()
+
+    def _holding(self):
+        """Whether a key press means "record while I hold this".
+
+        Only with the built-in listener: KDE's registry and GNOME's both
+        report that a combination was pressed and neither reports it being let
+        go of, so there is no release to end the recording on.
+        """
+        return bool(self.conf["hold_to_talk"]) and self.evdev.running
 
     def _retire_listener(self):
         self.evdev.stop()
