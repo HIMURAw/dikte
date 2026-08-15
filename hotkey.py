@@ -74,6 +74,12 @@ KEYS = {
     "l": 38, "z": 44, "x": 45, "c": 46, "v": 47, "b": 48, "n": 49, "m": 50,
     "f1": 59, "f2": 60, "f3": 61, "f4": 62, "f5": 63, "f6": 64, "f7": 65, "f8": 66,
     "f9": 67, "f10": 68, "f11": 87, "f12": 88,
+    # Nothing prints F13 upwards on a keycap, but firmware sends them anyway.
+    # The Copilot key a laptop has carried since 2024 is one of these: it sends
+    # Meta+Shift+F23 pressed and released together, so a key the keyboard offers
+    # for free stays unusable while the table stops at F12.
+    "f13": 183, "f14": 184, "f15": 185, "f16": 186, "f17": 187, "f18": 188,
+    "f19": 189, "f20": 190, "f21": 191, "f22": 192, "f23": 193, "f24": 194,
 }
 MODS = {
     "ctrl": (29, 97), "control": (29, 97),
@@ -228,6 +234,11 @@ MAC_KEYS = {
     "w": 13, "x": 7, "y": 16, "z": 6,
     "f1": 122, "f2": 120, "f3": 99, "f4": 118, "f5": 96, "f6": 97,
     "f7": 98, "f8": 100, "f9": 101, "f10": 109, "f11": 103, "f12": 111,
+    # Carbon numbers these four out of order, and it stops at F20. A Mac has no
+    # Copilot key to bind, so Meta+Shift+F23 is refused here rather than handed
+    # a virtual key that does not exist.
+    "f13": 105, "f14": 107, "f15": 113, "f16": 106,
+    "f17": 64, "f18": 79, "f19": 80, "f20": 90,
 }
 # Carbon's own modifier bits, which are not the ones CoreGraphics uses in
 # paste.py: the same four modifiers, numbered differently by two APIs.

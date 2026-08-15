@@ -47,7 +47,21 @@ class ParseShortcut(unittest.TestCase):
         self.assertEqual(hotkey.parse_shortcut("Ctrl+Alt"), (None, None))
 
     def test_a_key_nobody_mapped(self):
-        self.assertEqual(hotkey.parse_shortcut("Ctrl+F13"), (None, None))
+        self.assertEqual(hotkey.parse_shortcut("Ctrl+F25"), (None, None))
+
+    def test_the_copilot_key(self):
+        # The key sends all three at once and releases them together, so what
+        # reaches Dikte is an ordinary combination the table has to know.
+        mods, key = hotkey.parse_shortcut("Meta+Shift+F23")
+        self.assertEqual(mods, {"super", "shift"})
+        self.assertEqual(key, 193)
+
+    def test_the_keys_above_f12_are_all_there(self):
+        for number in range(13, 25):
+            with self.subTest(key=f"F{number}"):
+                mods, key = hotkey.parse_shortcut(f"Ctrl+F{number}")
+                self.assertEqual(mods, {"ctrl"})
+                self.assertEqual(key, 170 + number)
 
     def test_nothing(self):
         self.assertEqual(hotkey.parse_shortcut(""), (None, None))
@@ -130,10 +144,10 @@ class Bindings(DikteTest):
         listener.failed.connect(failures.append)
         with mock.patch.object(listener, "_open_devices", return_value=[99]), \
                 mock.patch.object(hotkey.threading, "Thread"):
-            self.assertTrue(listener.start({"toggle": "Ctrl+F13",
+            self.assertTrue(listener.start({"toggle": "Ctrl+F25",
                                             "ask": "Ctrl+Space"}))
         self.assertEqual(len(failures), 1)
-        self.assertIn("Ctrl+F13", failures[0])
+        self.assertIn("Ctrl+F25", failures[0])
         self.assertEqual(list(listener._bindings), [57])
 
     def test_no_readable_devices_says_what_to_do_about_it(self):
@@ -240,6 +254,12 @@ class GnomeAccelerator(DikteTest):
 
     def test_several_modifiers_keep_their_order(self):
         self.assertEqual(hotkey.gnome_accelerator("Ctrl+Alt+A"), "<Primary><Alt>a")
+
+    def test_the_copilot_key_keeps_the_case_gnome_wants(self):
+        # A one-letter key is lowercased and a named one is not, so the F stays
+        # capital: GNOME reads <Super><Shift>f23 as no key at all.
+        self.assertEqual(hotkey.gnome_accelerator("Meta+Shift+F23"),
+                         "<Super><Shift>F23")
 
     def test_the_synonyms(self):
         self.assertEqual(hotkey.gnome_accelerator("Meta+A"),
@@ -492,7 +512,12 @@ class ParseMacShortcut(unittest.TestCase):
         self.assertEqual(hotkey.parse_macos_shortcut("Cmd+Shift"), (None, None))
 
     def test_a_key_nobody_mapped(self):
-        self.assertEqual(hotkey.parse_macos_shortcut("Cmd+F13"), (None, None))
+        # Carbon has no virtual key above F20, which is where a Mac stops.
+        self.assertEqual(hotkey.parse_macos_shortcut("Cmd+F21"), (None, None))
+
+    def test_the_copilot_key_is_not_a_mac_shortcut(self):
+        self.assertEqual(hotkey.parse_macos_shortcut("Meta+Shift+F23"),
+                         (None, None))
 
     def test_two_keys_are_not_a_shortcut(self):
         self.assertEqual(hotkey.parse_macos_shortcut("A+B"), (None, None))
@@ -571,10 +596,10 @@ class CarbonListener(DikteTest):
         self.assertFalse(self.listener.running)
 
     def test_an_unparsable_shortcut_is_reported_and_the_rest_go_on(self):
-        self.assertTrue(self.listener.start({"toggle": "Cmd+F13",
+        self.assertTrue(self.listener.start({"toggle": "Cmd+F21",
                                              "ask": "Cmd+Shift+Space"}))
         self.assertEqual(len(self.failures), 1)
-        self.assertIn("Cmd+F13", self.failures[0])
+        self.assertIn("Cmd+F21", self.failures[0])
         self.assertEqual(len(self.carbon.registered), 1)
 
     def test_a_combination_another_application_already_holds(self):
@@ -683,7 +708,7 @@ class MacChooser(DikteTest):
 
     def test_a_combination_is_checked_against_the_mac_table(self):
         self.assertTrue(hotkey.valid_shortcut("Cmd+Shift+Space"))
-        self.assertFalse(hotkey.valid_shortcut("Ctrl+F13"))
+        self.assertFalse(hotkey.valid_shortcut("Ctrl+F21"))
 
     def test_the_other_table_is_the_one_used_elsewhere(self):
         with mock.patch.object(hotkey.sys, "platform", "linux"):

@@ -115,6 +115,9 @@ SHORTCUTS = [
     "Ctrl+Alt+A", "Ctrl+Alt+D", "Ctrl+Alt+M", "Ctrl+Alt+Q",
     "Meta+A", "Meta+D", "Meta+M",
     "Ctrl+Alt+F1", "Ctrl+Alt+F2", "Ctrl+Alt+F3",
+    # The last one is a key rather than a combination: this is what the Copilot
+    # key sends, and a laptop that has one has nothing else bound to it here.
+    "Meta+Shift+F23",
 ]
 # Cmd+Space is Spotlight and Ctrl+Space switches input sources, so a Mac gets
 # its own shortlist. Option is what Alt is called on that keyboard.
