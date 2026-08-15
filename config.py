@@ -517,31 +517,65 @@ class Config:
         self.data = dict(DEFAULTS)
         self.load()
 
-    def load(self):
+    @staticmethod
+    def _stored():
+        """What the file holds now, or None when there is nothing to read."""
         try:
             with open(CONFIG_FILE, encoding="utf-8") as fh:
                 stored = json.load(fh)
-            if isinstance(stored, dict):
-                self.data.update({k: v for k, v in stored.items() if k in DEFAULTS})
         except FileNotFoundError:
-            pass
+            return {}
         except (json.JSONDecodeError, OSError) as exc:
             print(f"dikte: could not read settings ({exc}), using defaults")
+            return None
+        if not isinstance(stored, dict):
+            return {}
+        return {k: v for k, v in stored.items() if k in DEFAULTS}
+
+    def load(self):
+        self.data.update(self._stored() or {})
         self.data["overlay_corner"] = _CORNER_MIGRATION.get(
             self.data["overlay_corner"], self.data["overlay_corner"]
         )
         stored_prompt = self.data["cleanup_prompt"].strip()
         if stored_prompt and _fingerprint(stored_prompt) in LEGACY_PROMPTS:
             self.data["cleanup_prompt"] = ""
+        # What the file said when this object read it. save() writes the
+        # difference against this rather than the whole table.
+        self._loaded = dict(self.data)
         i18n.set_language(self.data["ui_language"])
 
     def save(self):
+        """Write what this object changed, onto what the file holds now.
+
+        The settings outlive any one process: the window is open for minutes
+        while `dikte config set` and `dikte shortcut install` write between
+        two of its keystrokes. Writing the whole table back put every setting
+        as this object last read it, so saving one of them quietly undid every
+        change made anywhere else since the window opened.
+
+        Only the keys that actually moved are written, so two processes
+        editing different settings both keep theirs, and two editing the same
+        one leave the later save standing, which is the answer anybody would
+        expect.
+        """
         CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+        mine = {key: value for key, value in self.data.items()
+                if value != self._loaded.get(key, object())}
+        stored = self._stored()
+        merged = dict(DEFAULTS)
+        # An unreadable file is not something to merge onto: what is in hand
+        # is better than what could not be read.
+        merged.update(self.data if stored is None else stored)
+        merged.update(mine)
+        self.data = merged
+
         tmp = CONFIG_FILE.with_suffix(".json.tmp")
         with open(tmp, "w", encoding="utf-8") as fh:
             json.dump(self.data, fh, ensure_ascii=False, indent=2)
         os.chmod(tmp, 0o600)
         tmp.replace(CONFIG_FILE)
+        self._loaded = dict(self.data)
         i18n.set_language(self.data["ui_language"])
 
     def __getitem__(self, key):
