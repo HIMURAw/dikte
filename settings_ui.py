@@ -480,6 +480,7 @@ class SettingsWindow(QDialog):
         # provider back and forth never overwrites the other one's.
         self._models = dict.fromkeys(cfg.TRANSCRIBERS, "")
         self._key_fields = {}
+        self._base_url_fields = {}
         self._testers = {}
         self._shown_provider = ""
         self.transcriber = FileTranscriber(conf, self)
@@ -1364,11 +1365,16 @@ class SettingsWindow(QDialog):
         return box
 
     def _key_row(self, form, provider, placeholder, tester):
-        """A key field, its Test button and the line the answer lands on.
+        """A key field, its address, the Test button and the answer line.
 
-        The field and the pair the answer needs are filed under the provider's
-        name, so saving, loading and the test handler find them by name rather
-        than through three attributes each.
+        The widgets are filed under the provider's name, so saving, loading and
+        the test handler find them by name rather than through four attributes
+        each.
+
+        The address is here rather than hidden away because it is what turns a
+        provider row into any server that answers the same requests. Anything
+        speaking the OpenAI API can go in it: Ollama, LM Studio, vLLM, a
+        gateway of your own. Emptied, it goes back to the service's own.
         """
         field = QLineEdit()
         field.setEchoMode(QLineEdit.EchoMode.Password)
@@ -1378,8 +1384,19 @@ class SettingsWindow(QDialog):
         answer = QLabel("")
         answer.setWordWrap(True)
         form.addRow(cfg.TRANSCRIBERS[provider].service, self._row(field, button))
+
+        address = QLineEdit()
+        address.setPlaceholderText(cfg.DEFAULTS[cfg.TRANSCRIBERS[provider].url])
+        address.setToolTip(t(
+            "Where the requests go. Any server answering the OpenAI API can "
+            "take their place: Ollama on http://localhost:11434/v1, LM Studio "
+            "on http://localhost:1234/v1, vLLM, or a gateway of your own. "
+            "Emptied, it goes back to the service's own."
+        ))
+        form.addRow(t("Address"), address)
         form.addRow("", answer)
         self._key_fields[provider] = field
+        self._base_url_fields[provider] = address
         self._testers[provider] = (button, answer)
         return field
 
@@ -1447,6 +1464,13 @@ class SettingsWindow(QDialog):
 
         for name, who in cfg.TRANSCRIBERS.items():
             self._key_fields[name].setText(conf[who.key])
+            # The service's own address is what the placeholder already says,
+            # so showing it in the box too would leave nothing to tell the two
+            # apart. An address that is not the default is the only one worth
+            # putting on screen.
+            stored = conf[who.url]
+            self._base_url_fields[name].setText(
+                "" if stored == cfg.DEFAULTS[who.url] else stored)
             self._models[name] = conf[who.model]
         self._shown_provider = ""
         self._select_data(self.transcribe_provider, conf["transcribe_provider"])
@@ -1544,6 +1568,8 @@ class SettingsWindow(QDialog):
         conf["transcribe_provider"] = provider
         for name, who in cfg.TRANSCRIBERS.items():
             conf[who.key] = self._key_fields[name].text().strip()
+            conf[who.url] = (self._base_url_fields[name].text().strip()
+                             or cfg.DEFAULTS[who.url])
             conf[who.model] = self._models[name].strip() or cfg.DEFAULTS[who.model]
         conf["local_model"] = self.local_whisper.selected()
         conf["local_gpu"] = self.local_gpu.isChecked()
@@ -1739,10 +1765,17 @@ class SettingsWindow(QDialog):
         self._test_key("openrouter", lambda: api.openrouter_key_status(key))
 
     def _typed_key(self, provider):
-        """(key, base URL) for a provider, preferring what is in the field now."""
+        """(key, base URL) for a provider, preferring what is in the field now.
+
+        The address follows the same rule as the key, which is what makes Test
+        answer for the server about to be saved rather than the one saved last
+        time. An empty box is the default, the same reading _save takes, so the
+        button cannot pass for an address that Save would not write.
+        """
         who = cfg.TRANSCRIBERS[provider]
         typed = self._key_fields[provider].text().strip()
-        return typed or self.conf.api_key(who.key), self.conf[who.url]
+        address = self._base_url_fields[provider].text().strip()
+        return typed or self.conf.api_key(who.key), address or cfg.DEFAULTS[who.url]
 
     def _test_key(self, provider, ask):
         """Run `ask` off the interface thread and write its answer under the key.

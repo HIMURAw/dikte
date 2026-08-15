@@ -98,6 +98,13 @@ içinde, izinler 600, Mac'te ise `~/Library/Application Support/Dikte` altında.
 Temizlemeyi tamamen kapatabilirsin, o zaman ham transkript yapıştırılır; modelin
 yanındaki kutudan düşünme seviyesini de seçebilirsin.
 
+Her anahtarın altında bir **Adres** var; o sağlayıcının isteklerinin gittiği
+yer. OpenAI API'sine cevap veren her şey onun yerine geçebilir, yani zaten
+yerel model çalıştıran bir makinenin hiçbir yere üye olması gerekmez:
+OpenAI'ı `http://localhost:11434/v1` adresindeki Ollama'ya ya da
+`http://localhost:1234/v1` adresindeki LM Studio'ya çevir; Test ve model
+listesi de oradan okur. Kutuyu boşaltmak servisin kendi adresini geri koyar.
+
 ## Kullanım
 
 | Ne | Nasıl |
