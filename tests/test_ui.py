@@ -43,6 +43,9 @@ CHANGED = {
     "openai_api_key": "sk-test-key",
     "groq_api_key": "gsk-test-key",
     "openrouter_api_key": "sk-or-test-key",
+    "openai_base_url": "http://localhost:11434/v1",
+    "groq_base_url": "http://localhost:1234/v1",
+    "openrouter_base_url": "http://localhost:8000/v1",
     "transcribe_provider": "openrouter",
     "transcribe_model": "whisper-1",
     "groq_transcribe_model": "whisper-large-v3",
@@ -167,12 +170,12 @@ class Settings(DikteTest):
     def test_the_settings_the_window_does_not_show_are_left_alone(self):
         """A tab nobody wrote must not reset what the command line set."""
         self.write_config({"silence_db": -42.0, "speech_margin_db": 15.0,
-                           "openrouter_base_url": "http://localhost:1234/v1"})
+                           "min_voiced_seconds": 0.8})
         conf = cfg.Config()
         self.window(conf)._save()
         stored = self.read_config_file()
         self.assertEqual(stored["speech_margin_db"], 15.0)
-        self.assertEqual(stored["openrouter_base_url"], "http://localhost:1234/v1")
+        self.assertEqual(stored["min_voiced_seconds"], 0.8)
 
     def test_every_global_shortcut_has_a_row_of_its_own(self):
         window = self.window(cfg.Config())
@@ -233,6 +236,43 @@ class Settings(DikteTest):
         self.assertEqual(conf["transcribe_provider"], "openrouter")
         self.assertEqual(conf["transcribe_model"], "gpt-4o-transcribe")
         self.assertEqual(conf["groq_transcribe_model"], "whisper-large-v3")
+
+    def test_an_address_of_your_own_is_the_one_shown_and_kept(self):
+        """Pointing a provider at Ollama is the whole point of the field."""
+        self.write_config({"openai_base_url": "http://localhost:11434/v1"})
+        conf = cfg.Config()
+        window = self.window(conf)
+        self.assertEqual(window._base_url_fields["openai"].text(),
+                         "http://localhost:11434/v1")
+        window._save()
+        self.assertEqual(conf["openai_base_url"], "http://localhost:11434/v1")
+
+    def test_the_service_address_is_offered_rather_than_typed_out(self):
+        """Left alone, the box is empty and the placeholder says where the
+        requests go, so the one address on screen is the one in use."""
+        window = self.window(cfg.Config())
+        for name, who in cfg.TRANSCRIBERS.items():
+            with self.subTest(provider=name):
+                field = window._base_url_fields[name]
+                self.assertEqual(field.text(), "")
+                self.assertEqual(field.placeholderText(), cfg.DEFAULTS[who.url])
+
+    def test_emptying_the_address_goes_back_to_the_service(self):
+        self.write_config({"groq_base_url": "http://localhost:1234/v1"})
+        conf = cfg.Config()
+        window = self.window(conf)
+        window._base_url_fields["groq"].setText("   ")
+        window._save()
+        self.assertEqual(conf["groq_base_url"], cfg.DEFAULTS["groq_base_url"])
+
+    def test_test_asks_the_address_that_is_typed_not_the_one_stored(self):
+        """Otherwise the button answers for last time's server, which is the
+        one reading somebody checking a new address does not want."""
+        self.write_config({"openai_base_url": "http://localhost:11434/v1"})
+        window = self.window(cfg.Config())
+        window._base_url_fields["openai"].setText("http://localhost:8000/v1")
+        _, address = window._typed_key("openai")
+        self.assertEqual(address, "http://localhost:8000/v1")
 
     def test_the_provider_box_offers_every_provider_config_knows(self):
         window = self.window(cfg.Config())

@@ -212,6 +212,15 @@ TR = {
     "sk-… (falls back to OPENAI_API_KEY)": "sk-… (boşsa OPENAI_API_KEY kullanılır)",
     "gsk_… (falls back to GROQ_API_KEY)": "gsk_… (boşsa GROQ_API_KEY kullanılır)",
     "sk-or-… (falls back to OPENROUTER_API_KEY)": "sk-or-… (boşsa OPENROUTER_API_KEY kullanılır)",
+    "Address": "Adres",
+    "Where the requests go. Any server answering the OpenAI API can take their "
+    "place: Ollama on http://localhost:11434/v1, LM Studio on "
+    "http://localhost:1234/v1, vLLM, or a gateway of your own. Emptied, it "
+    "goes back to the service's own.":
+        "İsteklerin gittiği yer. OpenAI API'sine cevap veren her sunucu bunun "
+        "yerine geçebilir: http://localhost:11434/v1 adresindeki Ollama, "
+        "http://localhost:1234/v1 adresindeki LM Studio, vLLM ya da kendi ağ "
+        "geçidin. Boşaltılınca servisin kendi adresine döner.",
     "Test": "Test et",
     "Trying…": "Deneniyor…",
     "Runs on OpenRouter.": "OpenRouter üzerinde çalışır.",

@@ -104,6 +104,13 @@ installed, on Claude Code or Codex. The keys fall back to `OPENAI_API_KEY`,
 which case the raw transcript is pasted, and a thinking model's effort can be
 set next to it.
 
+Each key has an **Address** under it, which is where that provider's requests
+go. Anything answering the OpenAI API can stand in its place, so a machine
+already running one has nothing to sign up for: point OpenAI at Ollama on
+`http://localhost:11434/v1` or LM Studio on `http://localhost:1234/v1`, and
+Test and the model list read from there too. Emptying the box puts the
+service's own address back.
+
 ## Using it
 
 | What | How |
