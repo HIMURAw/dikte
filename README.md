@@ -5,9 +5,11 @@ machine by default, a model cleans it up (dropping the *uh*s, the restarts, the
 missing punctuation), and the result lands in your clipboard and is pasted into
 whatever window you were typing in.
 
-Built for KDE Plasma 6 on Wayland, and runs on GNOME X11 and macOS too. No
-dependencies beyond system packages: just the Python standard library, 3.11 or
-newer, and PyQt6.
+Built for KDE Plasma 6 on Wayland, and runs on GNOME and macOS too. The
+clipboard follows the session, Wayland or X11, and the shortcuts follow the
+desktop, KDE's file or GNOME's gsettings; the two are picked apart from each
+other, so GNOME works on either session. No dependencies beyond system
+packages: just the Python standard library, 3.11 or newer, and PyQt6.
 
 *[Türkçe README](README.tr.md)*
 
@@ -33,13 +35,17 @@ dikte                        # the settings window opens on first run
 
 On Fedora the packages are named differently, `ffmpeg-free` out of Fedora's own
 repositories is enough because Dikte only ever takes the audio track of a video
-file, and `ydotool` takes one step more: it ships as a system service, whose
-socket stays root-owned and out of your session's reach, so auto-paste fails
-with the daemon running. Point it at the path the client already looks at and
-hand the socket over:
+file, and two of them are worth a sentence. `pactl` is what reads the list of
+microphones, and Fedora keeps it in `pulseaudio-utils`, apart from the
+`pipewire-utils` that carries `pw-record`; without it the device lists come back
+empty and Dikte blames PipeWire for it. `ydotool` takes one step more: it ships
+as a system service, whose socket stays root-owned and out of your session's
+reach, so auto-paste fails with the daemon running. Point it at the path the
+client already looks at and hand the socket over:
 
 ```sh
-sudo dnf install pipewire-utils wl-clipboard ydotool ffmpeg-free python3-pyqt6
+sudo dnf install pipewire-utils pulseaudio-utils wl-clipboard ydotool \
+                 ffmpeg-free python3-pyqt6
 sudo mkdir -p /etc/systemd/system/ydotool.service.d
 printf '[Service]\nExecStart=\nExecStart=/usr/bin/ydotoold --socket-path=%s/.ydotool_socket --socket-own=%s:%s\n' \
   "$XDG_RUNTIME_DIR" "$(id -u)" "$(id -g)" \

@@ -31,7 +31,11 @@ echo "────────────────"
 
 # 1. Dependencies ----------------------------------------------------------
 missing=()
-audio_cmds=(ffmpeg)
+# pactl is not what records, pw-record and parec are, but it is what reads the
+# list of microphones and finds the default output. Missing, the device boxes
+# come back empty and Dikte reports it as PipeWire not running, so it belongs
+# in the check rather than being found later by the settings window.
+audio_cmds=(ffmpeg pactl)
 if command -v parec >/dev/null || command -v pw-record >/dev/null; then
   :
 else
@@ -51,7 +55,7 @@ if ((${#missing[@]})); then
   warn "Missing: ${missing[*]}"
   say  "Ubuntu X11:     sudo apt install pulseaudio-utils xclip xdotool ffmpeg"
   say  "Arch Wayland:   sudo pacman -S --needed pipewire-audio wl-clipboard ydotool ffmpeg python-pyqt6"
-  say  "Fedora Wayland: sudo dnf install pipewire-utils wl-clipboard ydotool ffmpeg-free python3-pyqt6"
+  say  "Fedora Wayland: sudo dnf install pipewire-utils pulseaudio-utils wl-clipboard ydotool ffmpeg-free python3-pyqt6"
   echo
 else
   ok "All dependencies present"
