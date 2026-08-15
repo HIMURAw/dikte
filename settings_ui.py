@@ -33,6 +33,28 @@ LANGUAGES = [
     ("German", "de"), ("French", "fr"), ("Spanish", "es"), ("Arabic", "ar"),
 ]
 CORNERS = ["bottom-left", "bottom-right", "top-left", "top-right"]
+
+# Turkish writes i two ways and neither str.lower() nor casefold() puts them
+# together: "İ".lower() keeps the dot behind as a combining mark, so a search
+# for "istanbul" walks straight past "İstanbul". All four forms fold onto the
+# one letter here, which is what a search box is for.
+_I_FORMS = str.maketrans({"I": "i", "İ": "i", "ı": "i"})
+
+
+def search_key(text):
+    """What a search compares, on both sides of the comparison."""
+    return str(text).translate(_I_FORMS).lower().strip()
+
+
+def history_haystack(row):
+    """Everything in one entry worth searching through.
+
+    The stamp is in it, so a date is as good a search as a word, and so is
+    what was asked of the agent: an answer often shares no word with the
+    question that produced it.
+    """
+    return " ".join(str(row.get(field) or "")
+                    for field in ("text", "raw", "question", "ts"))
 # The provider box offers what config knows how to reach, this machine first.
 TRANSCRIBE_PROVIDERS = ([("This machine (whisper.cpp)", "local")]
                         + [(who.service, name)
@@ -480,6 +502,7 @@ class SettingsWindow(QDialog):
         # provider back and forth never overwrites the other one's.
         self._models = dict.fromkeys(cfg.TRANSCRIBERS, "")
         self._key_fields = {}
+        self._history_rows = []
         self._testers = {}
         self._shown_provider = ""
         self.transcriber = FileTranscriber(conf, self)
@@ -1292,6 +1315,18 @@ class SettingsWindow(QDialog):
     def _history_tab(self):
         page = QWidget()
         layout = QVBoxLayout(page)
+
+        self.history_search = QLineEdit()
+        self.history_search.setPlaceholderText(
+            t("Search what was said, what was asked, or a date"))
+        self.history_search.setClearButtonEnabled(True)
+        self.history_search.textChanged.connect(self._show_history)
+        self._history_count = QLabel("")
+        search_row = QHBoxLayout()
+        search_row.addWidget(self.history_search, 1)
+        search_row.addWidget(self._history_count)
+        layout.addLayout(search_row)
+
         self.history = QListWidget()
         self.history.setWordWrap(True)
         self.history.setSelectionMode(
@@ -2060,8 +2095,23 @@ class SettingsWindow(QDialog):
     # ---- history ---------------------------------------------------------
 
     def _load_history(self):
+        """Read the file, then show whatever the search box lets through."""
+        self._history_rows = list(reversed(
+            cfg.read_history(self.conf["history_limit"])))
+        self._show_history()
+
+    def _show_history(self):
+        """Rebuild the list from what was read, minus what is filtered out.
+
+        Rebuilt rather than hidden row by row, because a hidden item keeps its
+        selection: filtering after selecting something would otherwise leave
+        Delete pointing at an entry that is no longer on screen.
+        """
+        wanted = search_key(self.history_search.text())
         self.history.clear()
-        for row in reversed(cfg.read_history(self.conf["history_limit"])):
+        for row in self._history_rows:
+            if wanted and wanted not in search_key(history_haystack(row)):
+                continue
             text = (row.get("text") or "").replace("\n", " ")
             preview = text[:110] + ("…" if len(text) > 110 else "")
             header = t("{ts}  ({duration} s)",
@@ -2075,6 +2125,13 @@ class SettingsWindow(QDialog):
             item = QListWidgetItem(f"{header}\n{preview}")
             item.setData(Qt.ItemDataRole.UserRole, row)
             self.history.addItem(item)
+        self._history_count.setText(self._history_summary())
+
+    def _history_summary(self):
+        shown, held = self.history.count(), len(self._history_rows)
+        if shown == held:
+            return t("{count} entries", count=held)
+        return t("{shown} of {count} entries", shown=shown, count=held)
 
     def _selected_rows(self):
         """Selected entries, newest first, the order they are listed in."""

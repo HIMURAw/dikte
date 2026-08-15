@@ -11,6 +11,7 @@ import unittest
 from typing import ClassVar
 from unittest import mock
 
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QMessageBox
 
 import cleanup
@@ -267,6 +268,59 @@ class Settings(DikteTest):
         self.write_config({"history_limit": 3})
         self.window(cfg.Config())._save()
         self.assertEqual(len(cfg.read_history()), 3)
+
+    def test_the_history_search_keeps_what_matches(self):
+        for text in ("bought milk", "wrote the report", "milk and bread"):
+            cfg.append_history({"ts": "2026-08-16", "text": text})
+        window = self.window(cfg.Config())
+        window._load_history()
+        self.assertEqual(window.history.count(), 3)
+        window.history_search.setText("milk")
+        shown = [window.history.item(i).data(Qt.ItemDataRole.UserRole)["text"]
+                 for i in range(window.history.count())]
+        self.assertEqual(shown, ["milk and bread", "bought milk"])
+
+    def test_a_date_is_as_good_a_search_as_a_word(self):
+        cfg.append_history({"ts": "2026-08-15", "text": "yesterday"})
+        cfg.append_history({"ts": "2026-08-16", "text": "today"})
+        window = self.window(cfg.Config())
+        window._load_history()
+        window.history_search.setText("2026-08-15")
+        self.assertEqual(window.history.count(), 1)
+
+    def test_the_search_finds_the_other_turkish_i(self):
+        """"İ".lower() leaves a combining dot behind, so a search for the word
+        as it is typed walks past the word as it is written."""
+        cfg.append_history({"ts": "now", "text": "İstanbul'a gidiyorum"})
+        cfg.append_history({"ts": "now", "text": "ışık yandı"})
+        window = self.window(cfg.Config())
+        window._load_history()
+        for typed in ("istanbul", "İstanbul", "ISTANBUL"):
+            with self.subTest(typed=typed):
+                window.history_search.setText(typed)
+                self.assertEqual(window.history.count(), 1)
+
+    def test_what_a_filtered_list_deletes_is_what_it_shows(self):
+        """The rows on screen are a subset, so deleting by position would take
+        the wrong entry out."""
+        for text in ("keep this one", "delete this one"):
+            cfg.append_history({"ts": "now", "text": text})
+        window = self.window(cfg.Config())
+        window._load_history()
+        window.history_search.setText("delete")
+        window.history.selectAll()
+        window._delete_history()
+        self.assertEqual([row["text"] for row in cfg.read_history()],
+                         ["keep this one"])
+
+    def test_the_count_says_how_much_the_search_is_hiding(self):
+        for text in ("alpha", "beta", "alphabet"):
+            cfg.append_history({"ts": "now", "text": text})
+        window = self.window(cfg.Config())
+        window._load_history()
+        self.assertEqual(window._history_count.text(), "3 entries")
+        window.history_search.setText("alpha")
+        self.assertEqual(window._history_count.text(), "2 of 3 entries")
 
     def test_saving_tells_whoever_is_listening(self):
         conf = cfg.Config()

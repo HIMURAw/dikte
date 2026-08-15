@@ -376,6 +376,10 @@ TR = {
     "Keep at most": "En fazla",
     " entries": " kayıt",
     "no limit": "sınırsız",
+    "Search what was said, what was asked, or a date":
+        "Söylenende, sorulanda ya da tarihte ara",
+    "{count} entries": "{count} kayıt",
+    "{shown} of {count} entries": "{count} kaydın {shown} tanesi",
     "Once the history passes this many entries, the oldest one is dropped "
     "every time a new one arrives. Set it to 0 to keep everything.":
         "Geçmiş bu sayıyı aştıktan sonra, her yeni kayıt geldiğinde en eski kayıt "
