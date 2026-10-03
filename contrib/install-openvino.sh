@@ -38,7 +38,7 @@ fi
 
 mkdir -p "$(dirname "$config")" "$(dirname "$wrapper")"
 if [[ ! -f $config ]]; then
-    printf '{"model": "%s", "devices": ["NPU", "GPU", "CPU"]}\n' "$model" >"$config"
+    printf '{"model": "%s", "devices": ["GPU", "NPU", "CPU"]}\n' "$model" >"$config"
 fi
 cat >"$wrapper" <<WRAP
 #!/bin/sh

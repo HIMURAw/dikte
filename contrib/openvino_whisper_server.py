@@ -6,7 +6,7 @@ Dikte starts its local speech-to-text server as
 
 and treats the port opening as "ready". This script takes the same arguments,
 answers the same OpenAI-shaped requests (json and verbose_json), and runs the
-model on Intel's NPU, the integrated GPU or the CPU, whichever loads first in
+model on the integrated GPU, Intel's NPU or the CPU, whichever loads first in
 the order given. Set Settings → API and models → whisper-server binary to the
 `dikte-openvino-whisper` wrapper that install-openvino.sh writes.
 
@@ -14,7 +14,7 @@ The ggml model Dikte passes with -m is ignored: OpenVINO needs its own export
 of the model, named in ~/.config/dikte/openvino.json:
 
     {"model": "~/.local/share/dikte/models/openvino/whisper-large-v3-turbo-int8-ov",
-     "devices": ["NPU", "GPU", "CPU"]}
+     "devices": ["GPU", "NPU", "CPU"]}
 
 Needs openvino-genai and numpy (install-openvino.sh puts them in a venv), and
 ffmpeg for audio that is not 16 kHz mono WAV.
@@ -52,7 +52,7 @@ def load_config(no_gpu):
     if CONFIG.is_file():
         conf = json.loads(CONFIG.read_text())
     model = pathlib.Path(os.path.expanduser(conf.get("model", DEFAULT_MODEL)))
-    devices = conf.get("devices") or ["NPU", "GPU", "CPU"]
+    devices = conf.get("devices") or ["GPU", "NPU", "CPU"]
     if no_gpu:
         devices = [d for d in devices if d != "GPU"]
     return model, devices
