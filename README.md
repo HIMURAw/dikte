@@ -197,6 +197,24 @@ running.
   right-click to delete.
 - **Turkish and English interface**, following the system locale by default.
 
+## Intel NPU or GPU through OpenVINO
+
+The whisper.cpp release binaries run on the CPU only. On an Intel Core Ultra
+laptop, `contrib/install-openvino.sh` sets up a drop-in for whisper-server that
+runs the same Whisper model through OpenVINO on the NPU, the integrated GPU or
+the CPU, whichever loads first:
+
+```sh
+./contrib/install-openvino.sh
+dikte config set local_binary ~/.local/bin/dikte-openvino-whisper
+```
+
+Measured on a Core Ultra 9 285H with whisper-large-v3-turbo, 30 s of Turkish
+speech: whisper.cpp on the CPU 24.8 s, OpenVINO on the Arc iGPU 0.96 s, on the
+CPU 7.4 s, with the same text. The NPU also needs the distribution's NPU driver
+and compiler (Fedora: `intel-npu-driver intel-npu-compiler`); until then the
+server says so in `whisper-server.log` and uses the GPU.
+
 ## The global shortcuts need one logout
 
 KWin only reads `kglobalshortcutsrc` at startup, so the shortcuts `install.sh`

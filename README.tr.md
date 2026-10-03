@@ -195,6 +195,24 @@ olmasını ister.
   silebilirsin.
 - **Türkçe ve İngilizce arayüz**, varsayılan olarak sistem dilini izler.
 
+## OpenVINO ile Intel NPU ya da GPU
+
+whisper.cpp'nin hazır sürümleri yalnızca işlemcide çalışır. Intel Core Ultra
+dizüstülerde `contrib/install-openvino.sh`, whisper-server'ın yerine geçen ve aynı
+Whisper modelini OpenVINO üzerinden NPU'da, entegre GPU'da ya da işlemcide (hangisi
+önce yüklenirse) çalıştıran bir sunucu kurar:
+
+```sh
+./contrib/install-openvino.sh
+dikte config set local_binary ~/.local/bin/dikte-openvino-whisper
+```
+
+Core Ultra 9 285H, whisper-large-v3-turbo, 30 sn Türkçe konuşma: whisper.cpp
+işlemcide 24,8 sn, OpenVINO Arc iGPU'da 0,96 sn, işlemcide 7,4 sn, metin aynı. NPU
+için dağıtımın NPU sürücüsü ve derleyicisi de gerekir (Fedora: `intel-npu-driver
+intel-npu-compiler`); o zamana kadar sunucu bunu `whisper-server.log`'a yazar ve
+GPU'yu kullanır.
+
 ## Global kısayollar için bir kez oturum kapatmak gerekir
 
 KWin `kglobalshortcutsrc` dosyasını yalnızca açılışta okur, yani `install.sh`'ın
